@@ -763,7 +763,7 @@ void MainWindow::importExcel()
 
         castVariant2ListListVariant(var,list);
 
-        qDebug() << list.at(1).at(3).toString();
+        //qDebug() << list.at(1).at(3).toString();
 
         QAxObject *rows = used_range->querySubObject("Rows");
         int row_count = rows->property("Count").toInt();
