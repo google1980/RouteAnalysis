@@ -22,20 +22,23 @@ FormRouteDataQuery::FormRouteDataQuery(QWidget *parent) :
     model->setHeaderData(2, Qt::Horizontal, QString::fromUtf8("航线代码")  );
     model->setHeaderData(3, Qt::Horizontal, QString::fromUtf8("航区")  );
     model->setHeaderData(4, Qt::Horizontal, QString::fromUtf8("最大船长"));
-    model->setHeaderData(5, Qt::Horizontal, QString::fromUtf8("月均箱量"));
-    model->setHeaderData(6, Qt::Horizontal, QString::fromUtf8("船型"));
-    model->setHeaderData(7, Qt::Horizontal, QString::fromUtf8("计划靠泊日期"));
-    model->setHeaderData(8, Qt::Horizontal, QString::fromUtf8("计划靠泊时间")  );
-    model->setHeaderData(9, Qt::Horizontal, QString::fromUtf8("计划离泊日期"));
-    model->setHeaderData(10, Qt::Horizontal, QString::fromUtf8("计划离泊时间"));
-    model->setHeaderData(11, Qt::Horizontal, QString::fromUtf8("靠泊起点")  );
-    model->setHeaderData(12, Qt::Horizontal, QString::fromUtf8("锁定标识")  );
+    model->setHeaderData(5, Qt::Horizontal, QString::fromUtf8("航线经营人"));
+    model->setHeaderData(6, Qt::Horizontal, QString::fromUtf8("上下港"));
+    model->setHeaderData(7, Qt::Horizontal, QString::fromUtf8("船代"));
+    model->setHeaderData(8, Qt::Horizontal, QString::fromUtf8("月均箱量"));
+    model->setHeaderData(9, Qt::Horizontal, QString::fromUtf8("船型"));
+    model->setHeaderData(10, Qt::Horizontal, QString::fromUtf8("计划靠泊日期"));
+    model->setHeaderData(11, Qt::Horizontal, QString::fromUtf8("计划靠泊时间")  );
+    model->setHeaderData(12, Qt::Horizontal, QString::fromUtf8("计划离泊日期"));
+    model->setHeaderData(13, Qt::Horizontal, QString::fromUtf8("计划离泊时间"));
+    model->setHeaderData(14, Qt::Horizontal, QString::fromUtf8("靠泊起点")  );
+    model->setHeaderData(15, Qt::Horizontal, QString::fromUtf8("锁定标识")  );
 
     ui->tableView->setModel(model);
     connect(ui->submitButton, SIGNAL(clicked()), this, SLOT(OnSubmit()));
     connect(ui->exportButton, SIGNAL(clicked()), this, SLOT(OnExport()));
 
-    ui->tableView->setItemDelegate(new MyComboDelegate(this,1,12));
+    ui->tableView->setItemDelegate(new MyComboDelegate(this,1,15));
 
 
     setAttribute(Qt::WA_DeleteOnClose);

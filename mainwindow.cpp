@@ -40,6 +40,8 @@ MainWindow::MainWindow()
         statusBar->showMessage("load db file error ", 10000);
     }
 
+    PainterHelper::initMap();
+
     this->setWindowState(Qt::WindowMaximized);
 
 }
@@ -55,21 +57,21 @@ void MainWindow::clean()
 {
     if (QMessageBox::Yes == QMessageBox::warning(this,
                                                   QString::fromUtf8("警告"),
-                                                  QString::fromUtf8("该操作将导致所有数据被清理!!! \r\n是否继续?"),
+                                                  QString::fromUtf8("该操作将导致部分业务数据被清理!!! \r\n是否继续?"),
                                                   QMessageBox::Yes | QMessageBox::No,
                                                   QMessageBox::Yes)) {
 
         QSqlQuery query;
-        query.exec(QObject::tr("drop table BERTH"));
+        //query.exec(QObject::tr("drop table BERTH"));
         query.exec(QObject::tr("drop table ROUTE_ARRANGEMENT"));
-        query.exec(QObject::tr("drop table TERMINAL"));
-        query.exec(QObject::tr("drop table NAVIGATION"));
+        //query.exec(QObject::tr("drop table TERMINAL"));
+        //query.exec(QObject::tr("drop table NAVIGATION"));
 
-        query.exec(QObject::tr("create table BERTH (TERMINAL_CODE vchar, SHIP_LIMIT integer, START_POINT integer, END_POINT integer , NICE integer)"));
-        query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar)"));
-        query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer, "
+        //query.exec(QObject::tr("create table BERTH (TERMINAL_CODE vchar, SHIP_LIMIT integer, START_POINT integer, END_POINT integer , NICE integer)"));
+        //query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar)"));
+        query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, "
                                    "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N')"));
-        query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar)"));
+        //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar)"));
 
     } else {
 
@@ -759,14 +761,35 @@ void MainWindow::importExcel()
 
         QVariant var = used_range->dynamicCall("Value");
 
+        if(NULL == used_range || used_range->isNull()){
+            return;
+        }
+
         QList<QList<QVariant> > list;
 
         castVariant2ListListVariant(var,list);
 
-        //qDebug() << list.at(1).at(3).toString();
+        /*
 
-        QAxObject *rows = used_range->querySubObject("Rows");
-        int row_count = rows->property("Count").toInt();
+        for (int i =0 ;i < list.at(41).count() ; i++){
+
+            qDebug() << list.at(41).at(5).toString();
+
+            qDebug() << PainterHelper::weekMap.key(list.at(41).at(5).toString().mid(0,2));
+
+            qDebug() << PainterHelper::weekMap.key(list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+1,2));
+
+            qDebug() << list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")-4,2)+":"+list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")-2,2);
+
+            qDebug() << list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+3,2)+":"+list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+5,2);
+
+        }
+        */
+
+        //qDebug() << qCeil((list.at(0).at(11).toString().mid(list.at(0).at(11).toString().indexOf("U")+3,list.at(0).at(11).toString().indexOf("-") - list.at(0).at(11).toString().indexOf("U") - 3)).toFloat());
+
+
+        int row_count = list.count() ;
 
         if (row_count > 0){
 
@@ -782,39 +805,39 @@ void MainWindow::importExcel()
                                   "values(:TERMINAL_NAME, :ROUTE_NAME, :ROUTE_CODE, :NAVIGATION_NAME, :SHIP_LENGTH,:TEU,:TYPE,"
                           ":START_WEEK_DAY,:START_TIME,:END_WEEK_DAY,:END_TIME,:START_BERTH_POINT,:IS_LOCKED )");
 
-            for (int i =1 ;i < row_count ; i++){
+            for (int i =0 ;i < row_count ; i++){
 
-                query.bindValue(0,work_sheet->querySubObject("Cells(int,int)", i+1, 1)->property("Value").toString());
-                query.bindValue(1,work_sheet->querySubObject("Cells(int,int)", i+1, 2)->property("Value").toString());
-                query.bindValue(2,work_sheet->querySubObject("Cells(int,int)", i+1, 3)->property("Value").toString());
-                query.bindValue(3,work_sheet->querySubObject("Cells(int,int)", i+1, 4)->property("Value").toString());
-                query.bindValue(4,work_sheet->querySubObject("Cells(int,int)", i+1, 5)->property("Value").toInt());
-                query.bindValue(5,work_sheet->querySubObject("Cells(int,int)", i+1, 6)->property("Value").toString());
-                query.bindValue(6,work_sheet->querySubObject("Cells(int,int)", i+1, 7)->property("Value").toString());
-                query.bindValue(7,work_sheet->querySubObject("Cells(int,int)", i+1, 8)->property("Value").toString());
+                query.bindValue(0,list.at(i).at(2).toString());
+                query.bindValue(1,list.at(i).at(3).toString());
+                query.bindValue(2,list.at(i).at(4).toString());
+                query.bindValue(3,list.at(i).at(6).toString());
+                query.bindValue(4,qCeil((list.at(i).at(11).toString().mid(list.at(i).at(11).toString().indexOf("U")+3,list.at(i).at(11).toString().indexOf("-") - list.at(i).at(11).toString().indexOf("U") - 3)).toFloat()));
+                query.bindValue(5,list.at(i).at(8).toString());
+                query.bindValue(6,list.at(i).at(11).toString());
 
-                query.bindValue(8,work_sheet->querySubObject("Cells(int,int)", i+1, 9)->property("Value").toString().trimmed());
-                query.bindValue(9,work_sheet->querySubObject("Cells(int,int)", i+1, 10)->property("Value").toString());
-                query.bindValue(10,work_sheet->querySubObject("Cells(int,int)", i+1, 11)->property("Value").toString().trimmed());
+                int startDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(0,2));
+                int endDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+1,2));
+                query.bindValue(7,startDay);
 
-                if (work_sheet->querySubObject("Cells(int,int)", i+1, 12)->property("Value").toString().isEmpty()){
-
-                    query.bindValue(11,0);
-                    query.bindValue(12,"N");
-
-                }else{
-
-                    query.bindValue(11,work_sheet->querySubObject("Cells(int,int)", i+1, 12)->property("Value").toInt());
-                    query.bindValue(12,"Y");
-
+                if (startDay > endDay)
+                {
+                    endDay = endDay + 7;
                 }
+
+                query.bindValue(8,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-4,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-2,2));
+
+                query.bindValue(9,endDay);
+                query.bindValue(10,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+3,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+5,2));
+                query.bindValue(11,0);
+                query.bindValue(12,"N");
 
 
                 query.exec();
 
-                progressBar->setValue( (row_count-1) *100 / i );
+                //progressBar->setValue( (row_count-1) *100 / i );
 
             }
+
         }
     }
     work_book->dynamicCall("Close(Boolean)", false);

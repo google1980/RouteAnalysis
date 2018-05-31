@@ -4,6 +4,19 @@ static const int resizeHandleWidth = 6;
 
 const QSizeF RouteRectangle::minSize(80, 50);
 
+QMap<int,QString> PainterHelper::weekMap;
+
+void PainterHelper::initMap()
+{
+    PainterHelper::weekMap.insert(1,QString::fromUtf8("周一"));
+    PainterHelper::weekMap.insert(2,QString::fromUtf8("周二"));
+    PainterHelper::weekMap.insert(3,QString::fromUtf8("周三"));
+    PainterHelper::weekMap.insert(4,QString::fromUtf8("周四"));
+    PainterHelper::weekMap.insert(5,QString::fromUtf8("周五"));
+    PainterHelper::weekMap.insert(6,QString::fromUtf8("周六"));
+    PainterHelper::weekMap.insert(7,QString::fromUtf8("周日"));
+}
+
 Axis::Axis(int length)
     : m_rcBounding(0,0,0,0)
     , m_len(length)
@@ -514,7 +527,7 @@ void PainterView::resizeEvent(QResizeEvent *event)
     if(s != NULL){
         //QRectF rc(0,0,size.width(),size.height());
 
-        QRectF rc(0,0,s->width(),2100);
+        QRectF rc(0,0,s->width(),2500);
 
         setSceneRect(rc);
         //s->setSceneRect(rc);

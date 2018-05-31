@@ -7,6 +7,11 @@
 class PainterHelper
 {
 public:
+
+    static QMap<int, QString> weekMap;
+
+    static void initMap();
+
     static QGradient gradient(const QColor &color, const QRectF &rect)
     {
         QColor c = color;
