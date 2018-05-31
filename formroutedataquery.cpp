@@ -63,6 +63,13 @@ void FormRouteDataQuery::OnSubmit()
 
 }
 
+void FormRouteDataQuery::OnDelete()
+{
+    int curRow = ui->tableView->currentIndex().row();
+    model->removeRow(curRow);
+}
+
+
 void FormRouteDataQuery::OnExport()
 {
     QString fileName = QFileDialog::getSaveFileName(this, "save",QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),"Excel file(*.xls *.xlsx)");

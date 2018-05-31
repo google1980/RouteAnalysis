@@ -19,6 +19,7 @@ public:
 private slots:
     void OnSubmit();
     void OnExport();
+    void OnDelete();
 
 private:
     Ui::FormRouteDataQuery *ui;
