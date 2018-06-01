@@ -332,8 +332,6 @@ void MainWindow::newFile()
             t._basePoint.setX(sql_query.value(4).toInt());
             t._basePoint.setY(sql_query.value(5).toInt());
 
-            subWindow->setWindowTitle(t._terminal_name);
-
             QGraphicsTextItem * text = scene->addText(t._terminal_name, QFont("Microsoft YaHei", 18, 75, true));
             text->setPos(t._basePoint.x()-50,t._basePoint.y()-40);
             text->setDefaultTextColor(QColor(0, 0, 0, 50));
@@ -351,6 +349,7 @@ void MainWindow::newFile()
     }
 
     view->setHeight(y + 24*12*day + 100);
+    subWindow->setWindowTitle(QString::fromUtf8("泊位图"));
 
     connect(view, &PainterView::exit, this, &MainWindow::childWinExit);
     subWindow->show();
