@@ -33,10 +33,12 @@ FormRouteDataQuery::FormRouteDataQuery(QWidget *parent) :
     model->setHeaderData(13, Qt::Horizontal, QString::fromUtf8("计划离泊时间"));
     model->setHeaderData(14, Qt::Horizontal, QString::fromUtf8("靠泊起点")  );
     model->setHeaderData(15, Qt::Horizontal, QString::fromUtf8("锁定标识")  );
+    model->setHeaderData(16, Qt::Horizontal, QString::fromUtf8("时间窗口")  );
 
     ui->tableView->setModel(model);
     connect(ui->submitButton, SIGNAL(clicked()), this, SLOT(OnSubmit()));
     connect(ui->exportButton, SIGNAL(clicked()), this, SLOT(OnExport()));
+    connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(OnDelete()));
 
     ui->tableView->setItemDelegate(new MyComboDelegate(this,1,15));
 

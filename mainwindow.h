@@ -15,6 +15,14 @@
 #include <QAxObject>
 #include "painter.h"
 
+typedef struct {
+    QString _terminal_name;
+    QString _terminal_code;
+    int _terminal_len;
+    int _terminal_day;
+    QPointF _basePoint;
+}Terminal;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -40,6 +48,9 @@ private slots:
     void clean();
     void about();
     void updateWindowMenu();
+
+    void drawOneBerthMap(const Terminal t);
+    void saveOneBerthData(const Terminal t);
 
 private:
 
@@ -70,9 +81,7 @@ private:
 
     PainterScene *scene;
 
-    QString m_current_terminal;
-    int m_current_terminal_len;
-    int m_current_terminal_day;
+    QList<Terminal> terminals;
 
     void castVariant2ListListVariant(const QVariant &var, QList<QList<QVariant> > &res);
 

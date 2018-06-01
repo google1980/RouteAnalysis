@@ -106,7 +106,7 @@ void XAxis::setStartPoint(const QPointF &pos)
 
 void XAxis::setEndPoint()
 {
-    m_endPosScene = QPointF(m_startPosScene.x() + m_len,m_startPosScene.y());;
+    m_endPosScene = QPointF(m_startPosScene.x() + m_len,m_startPosScene.y());
     qreal endX = m_endPosScene.x();
     qreal endY = m_endPosScene.y();
     qreal startX = m_startPosScene.x();
@@ -240,11 +240,14 @@ QRectF YAxis::boundingRect() const
     return m_rcBounding;
 }
 
-RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id)
+RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint)
     : QGraphicsItem(parent)
     , m_text(text)
-    , m_id(id)
+    , m_id_1(id1)
+    , m_id_2(id2)
+    , m_id_3(id3)
     , m_rcBounding(0,0,0,0)
+    , m_basePoint(basePoint)
 {
     setFlags(QGraphicsItem::ItemIsSelectable|QGraphicsItem::ItemSendsGeometryChanges);
 
@@ -289,6 +292,11 @@ void RouteRectangle::setEndPoint(const QPointF &pos)
 QPointF RouteRectangle::getStartPosScene()
 {
     return m_startPosScene;
+}
+
+QPointF RouteRectangle::getBasePoint()
+{
+    return m_basePoint;
 }
 
 QPointF RouteRectangle::getEndPosScene()
@@ -454,15 +462,27 @@ QString RouteRectangle::getText()
     return m_text;
 }
 
-QString RouteRectangle::getId()
+QString RouteRectangle::getId1()
 {
-    return m_id;
+    return m_id_1;
 }
+
+QString RouteRectangle::getId2()
+{
+    return m_id_2;
+}
+
+QString RouteRectangle::getId3()
+{
+    return m_id_3;
+}
+
 
 PainterView::PainterView(QWidget *parent)
     : QGraphicsView(parent)
     , m_zoomDelta(0.1)
     , m_scale(1.0)
+    , m_height(2500)
 
 {
     setRenderHint(QPainter::Antialiasing,true);
@@ -481,6 +501,11 @@ void PainterView::setZoomDelta(qreal delta)
     Q_ASSERT_X(delta >= 0.0 && delta <= 1.0,
                "InteractiveView::setZoomDelta", "Delta should be in range [0.0, 1.0].");
     m_zoomDelta = delta;
+}
+
+void PainterView::setHeight(int height)
+{
+    m_height = height;
 }
 
 void PainterView::wheelEvent(QWheelEvent *event)
@@ -527,7 +552,7 @@ void PainterView::resizeEvent(QResizeEvent *event)
     if(s != NULL){
         //QRectF rc(0,0,size.width(),size.height());
 
-        QRectF rc(0,0,s->width(),2500);
+        QRectF rc(0,0,s->width(),m_height);
 
         setSceneRect(rc);
         //s->setSceneRect(rc);

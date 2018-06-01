@@ -70,7 +70,7 @@ void MainWindow::clean()
         //query.exec(QObject::tr("create table BERTH (TERMINAL_CODE vchar, SHIP_LIMIT integer, START_POINT integer, END_POINT integer , NICE integer)"));
         //query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar)"));
         query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, "
-                                   "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N')"));
+                                   "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar)"));
         //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar)"));
 
     } else {
@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.0.1"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.0.2"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 
@@ -156,42 +156,8 @@ void MainWindow::saveData()
 {
     if (scene->items().count() != 0){
 
-        QSqlQuery sql;
-
-        QString update_sql = "update ROUTE_ARRANGEMENT set START_BERTH_POINT = :x1 , "
-                             "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y' "
-                             "where ROUTE_NAME = :x7";
-        sql.prepare(update_sql);
-
-        QList<QGraphicsItem *> items = scene->items();
-
-        foreach (QGraphicsItem *item, items) {
-            if (item->type() == QGraphicsItem::UserType + 1) {  // 矩形
-
-                RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
-
-                sql.bindValue(":x1", PainterHelper::convertScreenToStartBerthPoint(routeItem->getStartPosScene()));
-                sql.bindValue(":x2", PainterHelper::convertScreenToLength(routeItem->getStartPosScene(),routeItem->getEndPosScene()));
-                sql.bindValue(":x3", PainterHelper::convertScreenToStartWeekDay(routeItem->getStartPosScene()));
-                sql.bindValue(":x4", PainterHelper::convertScreenToStartTime(routeItem->getStartPosScene()));
-                sql.bindValue(":x5", PainterHelper::convertScreenToEndWeekDay(routeItem->getEndPosScene()));
-                sql.bindValue(":x6", PainterHelper::convertScreenToEndTime(routeItem->getEndPosScene()));
-                sql.bindValue(":x7", routeItem->getId());
-
-                if(!sql.exec())
-                {
-                    qDebug() << sql.lastError();
-                }
-                else
-                {
-                    qDebug() << "updated!";
-                }
-
-
-            }
-
-        }
-
+        foreach (Terminal t, terminals)
+            saveOneBerthData(t);
 
     }else{
 
@@ -206,7 +172,7 @@ void MainWindow::lock()
 
         QSqlQuery sql;
 
-        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'Y',START_BERTH_POINT = :x0 where ROUTE_NAME = :x1";
+        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'Y',START_BERTH_POINT = :x0 where ROUTE_CODE = :x1 and TERMINAL_NAME = :x2 and TIME_WINDOW = :x3";
 
         sql.prepare(update_sql);
 
@@ -216,8 +182,10 @@ void MainWindow::lock()
             if ((item->type() == QGraphicsItem::UserType + 1) && (item->isSelected())) {  // 矩形
 
                 RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
-                sql.bindValue(":x0", PainterHelper::convertScreenToStartBerthPoint(routeItem->getStartPosScene()));
-                sql.bindValue(":x1", routeItem->getId());
+                sql.bindValue(":x0", PainterHelper::convertScreenToStartBerthPoint(routeItem->getStartPosScene(),routeItem->getBasePoint()));
+                sql.bindValue(":x1", routeItem->getId2());
+                sql.bindValue(":x2", routeItem->getId1());
+                sql.bindValue(":x3", routeItem->getId3());
 
                 if(!sql.exec())
                 {
@@ -245,7 +213,7 @@ void MainWindow::unlock()
 
         QSqlQuery sql;
 
-        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'N' where ROUTE_NAME = :x1";
+        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'N' where ROUTE_CODE = :x1  and TERMINAL_NAME = :x2 and TIME_WINDOW = :x3";
 
         sql.prepare(update_sql);
 
@@ -256,7 +224,9 @@ void MainWindow::unlock()
 
                 RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
 
-                sql.bindValue(":x1", routeItem->getId());
+                sql.bindValue(":x1", routeItem->getId2());
+                sql.bindValue(":x2", routeItem->getId1());
+                sql.bindValue(":x3", routeItem->getId3());
 
                 if(!sql.exec())
                 {
@@ -284,7 +254,7 @@ void MainWindow::undo()
 
         QSqlQuery sql;
 
-        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'N' where ROUTE_NAME = :x1";
+        QString update_sql = "update ROUTE_ARRANGEMENT set IS_LOCKED = 'N' where ROUTE_CODE = :x1  and TERMINAL_NAME = :x2 and TIME_WINDOW = :x3 ";
 
         sql.prepare(update_sql);
 
@@ -295,7 +265,9 @@ void MainWindow::undo()
 
                 RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
 
-                sql.bindValue(":x1", routeItem->getId());
+                sql.bindValue(":x1", routeItem->getId2());
+                sql.bindValue(":x2", routeItem->getId1());
+                sql.bindValue(":x3", routeItem->getId3());
 
                 if(!sql.exec())
                 {
@@ -333,10 +305,12 @@ void MainWindow::newFile()
 
     subWindow->resize(QSize(1200,400));
 
-    QSqlQuery sql_query;
-    QString terminal_code;
+    int y = 0;
+    int day = 0;
 
-    QString select_sql = "select TERMINAL_NAME,TERMINAL_CODE,TERMINAL_LEN,DAY from TERMINAL where ENABLED = 'Y' ";
+    QSqlQuery sql_query;
+
+    QString select_sql = "select TERMINAL_NAME,TERMINAL_CODE,TERMINAL_LEN,DAY,X_OFFSET,Y_OFFSET from TERMINAL where ENABLED = 'Y' ";
     if(!sql_query.exec(select_sql))
     {
         qDebug()<<sql_query.lastError();
@@ -344,229 +318,39 @@ void MainWindow::newFile()
     }
     else
     {
-        if (sql_query.next()){
-            m_current_terminal = sql_query.value(0).toString();
-            terminal_code = sql_query.value(1).toString();
-            m_current_terminal_len = sql_query.value(2).toInt();
-            m_current_terminal_day = sql_query.value(3).toInt();
-            subWindow->setWindowTitle(m_current_terminal);
 
-            QGraphicsTextItem * text = scene->addText(m_current_terminal, QFont("Microsoft YaHei", 18, 75, true));
-            text->setPos(40,15);
+        while (sql_query.next()){
+
+            Terminal t;
+
+
+            t._terminal_name = sql_query.value(0).toString();
+            t._terminal_code = sql_query.value(1).toString();
+            t._terminal_len = sql_query.value(2).toInt();
+            t._terminal_day = sql_query.value(3).toInt();
+
+            t._basePoint.setX(sql_query.value(4).toInt());
+            t._basePoint.setY(sql_query.value(5).toInt());
+
+            subWindow->setWindowTitle(t._terminal_name);
+
+            QGraphicsTextItem * text = scene->addText(t._terminal_name, QFont("Microsoft YaHei", 18, 75, true));
+            text->setPos(t._basePoint.x()-50,t._basePoint.y()-40);
             text->setDefaultTextColor(QColor(0, 0, 0, 50));
-        }else{
 
-            return;
+            terminals.append(t);
+            drawOneBerthMap(t);
 
-        }
-    }
-
-    XAxis * xAxis = new XAxis(m_current_terminal_len);
-
-    xAxis->setStartPoint(QPointF(100,50));
-    xAxis->setEndPoint();
-
-    YAxis * yAxis = new YAxis(m_current_terminal_day);
-
-    yAxis->setStartPoint(QPointF(100,50));
-    yAxis->setEndPoint();
-
-    scene->setAxis(xAxis,yAxis);
-
-    scene->addItem(xAxis);
-    scene->addItem(yAxis);
-
-    for (int i = 1 ; i<= m_current_terminal_day - 1 ;i++){
-
-        Axis * axis = new Axis(m_current_terminal_len);
-        axis->setStartPoint(QPointF(100,50+288*i ));
-        axis->setEndPoint();
-        scene->addItem(axis);
-
-    }
-
-
-
-    //查已lock的数据
-    QList<QPair <QPointF,QPointF>> list;
-
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE"
-                 " from ROUTE_ARRANGEMENT,NAVIGATION where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
-                 "and TERMINAL_NAME = '" + m_current_terminal +"'";
-    if(!sql_query.exec(select_sql))
-    {
-        qDebug()<<sql_query.lastError();
-    }
-    else
-    {
-        while(sql_query.next())
-        {
-            QString routeName = sql_query.value(0).toString();
-            int startBerthPoint = sql_query.value(1).toInt();
-            int shipLength = sql_query.value(2).toInt();
-            int startWeekDay = sql_query.value(3).toInt();
-            QString startTime = sql_query.value(4).toString();
-            int endWeekDay = sql_query.value(5).toInt();
-            QString endTime = sql_query.value(6).toString();
-            QString color = sql_query.value(7).toString();
-            QString teu = sql_query.value(8).toString();
-            QString type = sql_query.value(9).toString();
-
-            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
-                   QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
-                    +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
-
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,routeName);
-
-            routeRectangle->setStartPoint(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay));
-            routeRectangle->setEndPoint(PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay));
-
-            routeRectangle->setToolTip(text);
-
-            routeRectangle->setFillColor(QColor(color));
-
-            scene->addItem(routeRectangle);
-
-            scene->setCurrentRect(routeRectangle);
-
-            list.append(QPair<QPointF,QPointF>(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay),
-                                               PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay)));
-
-        }
-    }
-
-    //未lock的数据自动排一遍
-
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE"
-                 " from ROUTE_ARRANGEMENT,NAVIGATION "
-                 "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
-                 "and TERMINAL_NAME = '" + m_current_terminal +"' order by SHIP_LENGTH desc ";
-    if(!sql_query.exec(select_sql))
-    {
-        qDebug()<<sql_query.lastError();
-    }
-    else
-    {
-
-        while(sql_query.next())
-        {
-            QString routeName = sql_query.value(0).toString();
-
-            int shipLength = sql_query.value(2).toInt();
-            int startWeekDay = sql_query.value(3).toInt();
-            QString startTime = sql_query.value(4).toString();
-            int endWeekDay = sql_query.value(5).toInt();
-            QString endTime = sql_query.value(6).toString();
-            QString color = sql_query.value(7).toString();
-            QString teu = sql_query.value(8).toString();
-            QString type = sql_query.value(9).toString();
-
-            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
-                   QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
-                    +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
-
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,routeName);
-
-            QSqlQuery query_conf;
-
-            QString conf_sql;
-
-            conf_sql = "select START_POINT , END_POINT from BERTH where TERMINAL_CODE = '" + terminal_code + "' "
-                       "and ABS(SHIP_LIMIT-" + QString::number(shipLength)+ ") = (select MIN(ABS(SHIP_LIMIT-" + QString::number(shipLength) + ")) "
-                       "from BERTH where SHIP_LIMIT < "+ QString::number(shipLength) + " )  order by NICE ";
-
-            //qDebug()<< conf_sql;
-
-            if(!query_conf.exec(conf_sql))
+            if (t._basePoint.y()>y)
             {
-                qDebug()<<query_conf.lastError();
-            }
-            else
-            {
-                int flag = 0;
-                QPointF topLeft;
-                QPointF bottomRight;
-                int startBerthPoint;
-                int endBerthPoint;
-
-
-                while(query_conf.next())
-                {
-                    startBerthPoint = query_conf.value(0).toInt();
-                    endBerthPoint = query_conf.value(1).toInt();
-
-                    topLeft = PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay);
-                    bottomRight = PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay);
-
-
-                    QPair<QPointF,QPointF> pair;
-                    qreal x = -1;
-
-                    while (bottomRight.x() < (endBerthPoint + 100)){
-
-                        foreach( pair , list) {
-
-                            if (QRectF(topLeft,bottomRight).intersects(QRectF(pair.first,pair.second))){
-
-                                if (x < pair.second.x()){
-
-                                    x = pair.second.x() + 20;
-
-                                }
-
-                            }
-
-                        }
-
-                        if (x > 0){
-
-                            topLeft = PainterHelper::convertToScreenTopLeft(x-100,startTime,startWeekDay);
-                            bottomRight = PainterHelper::convertToScreenBottomRight(x-100,shipLength,endTime,endWeekDay);
-                            x = -1;
-
-                        }else{
-
-                            break;
-
-                        }
-
-                    }
-
-                    if (x < 0){
-                        flag = 1 ;
-                        break;
-                    }
-                }
-
-                if (flag == 1){
-
-                    routeRectangle->setStartPoint(topLeft);
-                    routeRectangle->setEndPoint(bottomRight);
-                    list.append(QPair<QPointF,QPointF>(topLeft,bottomRight));
-
-                }else{
-
-                    topLeft = PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay);
-                    bottomRight = PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay);
-                    routeRectangle->setStartPoint(topLeft);
-                    routeRectangle->setEndPoint(bottomRight);
-                    list.append(QPair<QPointF,QPointF>(topLeft,bottomRight));
-
-                }
-
+                y = t._basePoint.y();
+                day = t._terminal_day;
             }
 
-            routeRectangle->setToolTip(text);
-
-            routeRectangle->setFillColor(QColor(color));
-
-            scene->addItem(routeRectangle);
-
-            scene->setCurrentRect(routeRectangle);
-
         }
     }
 
+    view->setHeight(y + 24*12*day + 100);
 
     connect(view, &PainterView::exit, this, &MainWindow::childWinExit);
     subWindow->show();
@@ -591,7 +375,7 @@ void MainWindow::exportPDF()
 
     QString fileName;
     fileName = QFileDialog::getSaveFileName(this,
-        tr("PDF"), m_current_terminal, tr("PDF Files (*.pdf)"));
+        tr("PDF"), terminals.at(0)._terminal_name, tr("PDF Files (*.pdf)"));
 
     if (!fileName.isNull())
     {
@@ -753,6 +537,7 @@ void MainWindow::importExcel()
     int sheet_count = work_sheets->property("Count").toInt();
 
     QSqlQuery query;
+    QSqlQuery del;
 
     if(sheet_count > 0)
     {
@@ -765,28 +550,17 @@ void MainWindow::importExcel()
             return;
         }
 
+
+
         QList<QList<QVariant> > list;
 
         castVariant2ListListVariant(var,list);
 
-        /*
-
-        for (int i =0 ;i < list.at(41).count() ; i++){
-
-            qDebug() << list.at(41).at(5).toString();
-
-            qDebug() << PainterHelper::weekMap.key(list.at(41).at(5).toString().mid(0,2));
-
-            qDebug() << PainterHelper::weekMap.key(list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+1,2));
-
-            qDebug() << list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")-4,2)+":"+list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")-2,2);
-
-            qDebug() << list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+3,2)+":"+list.at(41).at(5).toString().mid(list.at(41).at(5).toString().indexOf("-")+5,2);
-
+        if (list.at(0).count() != 14)
+        {
+            QMessageBox::warning(NULL,"error",QString::fromUtf8("Excel文件格式不正确,请检查!!!"),QMessageBox::Apply);
+            return;
         }
-        */
-
-        //qDebug() << qCeil((list.at(0).at(11).toString().mid(list.at(0).at(11).toString().indexOf("U")+3,list.at(0).at(11).toString().indexOf("-") - list.at(0).at(11).toString().indexOf("U") - 3)).toFloat());
 
 
         int row_count = list.count() ;
@@ -798,14 +572,21 @@ void MainWindow::importExcel()
             progressBar->setRange(0,100);
             progressBar->setValue(0);
 
-            query.exec(QObject::tr("delete from ROUTE_ARRANGEMENT"));
+            //query.exec(QObject::tr("delete from ROUTE_ARRANGEMENT"));
 
             query.prepare("insert into ROUTE_ARRANGEMENT(TERMINAL_NAME, ROUTE_NAME,ROUTE_CODE,NAVIGATION_NAME,SHIP_LENGTH, "
-                          "TEU ,TYPE ,START_WEEK_DAY ,START_TIME ,END_WEEK_DAY ,END_TIME,START_BERTH_POINT,IS_LOCKED )"
+                          "TEU ,TYPE ,START_WEEK_DAY ,START_TIME ,END_WEEK_DAY ,END_TIME,START_BERTH_POINT,IS_LOCKED,OPERATOR,PORT,AGENT,TIME_WINDOW)"
                                   "values(:TERMINAL_NAME, :ROUTE_NAME, :ROUTE_CODE, :NAVIGATION_NAME, :SHIP_LENGTH,:TEU,:TYPE,"
-                          ":START_WEEK_DAY,:START_TIME,:END_WEEK_DAY,:END_TIME,:START_BERTH_POINT,:IS_LOCKED )");
+                          ":START_WEEK_DAY,:START_TIME,:END_WEEK_DAY,:END_TIME,:START_BERTH_POINT,:IS_LOCKED,:OPERATOR,:PORT,:AGENT,:TIME_WINDOW)");
+
+            del.prepare("delete from ROUTE_ARRANGEMENT where TERMINAL_NAME = :TERMINAL_NAME and ROUTE_CODE = :ROUTE_CODE and TIME_WINDOW = :TIME_WINDOW");
 
             for (int i =0 ;i < row_count ; i++){
+
+                del.bindValue(0,list.at(i).at(2).toString());
+                del.bindValue(1,list.at(i).at(4).toString());
+                del.bindValue(2,list.at(i).at(5).toString());
+                del.exec();
 
                 query.bindValue(0,list.at(i).at(2).toString());
                 query.bindValue(1,list.at(i).at(3).toString());
@@ -830,16 +611,21 @@ void MainWindow::importExcel()
                 query.bindValue(10,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+3,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+5,2));
                 query.bindValue(11,0);
                 query.bindValue(12,"N");
-
+                query.bindValue(13,list.at(i).at(7).toString());
+                query.bindValue(14,list.at(i).at(9).toString());
+                query.bindValue(15,list.at(i).at(10).toString());
+                query.bindValue(16,list.at(i).at(5).toString());
 
                 query.exec();
 
-                //progressBar->setValue( (row_count-1) *100 / i );
+                progressBar->setValue( i *100 / row_count );
 
             }
 
         }
     }
+
+
     work_book->dynamicCall("Close(Boolean)", false);
     excel.dynamicCall("Quit(void)");
     progressBar->setHidden(true);
@@ -878,5 +664,267 @@ void MainWindow::castVariant2ListListVariant(const QVariant &var, QList<QList<QV
         res.push_back(rowData);
     }
 }
+
+void MainWindow::drawOneBerthMap(const Terminal t)
+{
+    QSqlQuery sql_query;
+
+    QString select_sql = "select TERMINAL_NAME,TERMINAL_CODE,TERMINAL_LEN,DAY from TERMINAL where ENABLED = 'Y' ";
+
+
+    qreal xOffset = t._basePoint.x();
+    qreal yOffset = t._basePoint.y();
+
+    XAxis * xAxis = new XAxis(t._terminal_len);
+
+    xAxis->setStartPoint(t._basePoint);
+    xAxis->setEndPoint();
+
+    YAxis * yAxis = new YAxis(t._terminal_day);
+
+    yAxis->setStartPoint(t._basePoint);
+    yAxis->setEndPoint();
+
+    scene->setAxis(xAxis,yAxis);
+
+    scene->addItem(xAxis);
+    scene->addItem(yAxis);
+
+    for (int i = 1 ; i<= t._terminal_day - 1 ;i++){
+
+        Axis * axis = new Axis(t._terminal_len);
+        axis->setStartPoint(QPointF(xOffset,yOffset+288*i ));
+        axis->setEndPoint();
+        scene->addItem(axis);
+
+    }
+
+    QList<QPair <QPointF,QPointF>> list;
+
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW"
+                 " from ROUTE_ARRANGEMENT,NAVIGATION, where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
+                 "and TERMINAL_NAME = '" + t._terminal_name +"'";
+    if(!sql_query.exec(select_sql))
+    {
+        qDebug()<<sql_query.lastError();
+    }
+    else
+    {
+        while(sql_query.next())
+        {
+            QString routeName = sql_query.value(0).toString();
+            int startBerthPoint = sql_query.value(1).toInt();
+            int shipLength = sql_query.value(2).toInt();
+            int startWeekDay = sql_query.value(3).toInt();
+            QString startTime = sql_query.value(4).toString();
+            int endWeekDay = sql_query.value(5).toInt();
+            QString endTime = sql_query.value(6).toString();
+            QString color = sql_query.value(7).toString();
+            QString teu = sql_query.value(8).toString();
+            QString type = sql_query.value(9).toString();
+            QString routeCode = sql_query.value(10).toString();
+            QString timeWindow = sql_query.value(11).toString();
+
+            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
+                   QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
+                    +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
+
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint);
+
+            routeRectangle->setStartPoint(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint));
+            routeRectangle->setEndPoint(PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint));
+
+            routeRectangle->setToolTip(text);
+
+            routeRectangle->setFillColor(QColor(color));
+
+            scene->addItem(routeRectangle);
+
+            scene->setCurrentRect(routeRectangle);
+
+            list.append(QPair<QPointF,QPointF>(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint),
+                                               PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint)));
+
+        }
+    }
+
+    //未lock的数据自动排一遍
+
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW"
+                 " from ROUTE_ARRANGEMENT,NAVIGATION "
+                 "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
+                 "and TERMINAL_NAME = '" + t._terminal_name +"' order by SHIP_LENGTH desc ";
+    if(!sql_query.exec(select_sql))
+    {
+        qDebug()<<sql_query.lastError();
+    }
+    else
+    {
+
+        while(sql_query.next())
+        {
+            QString routeName = sql_query.value(0).toString();
+
+            int shipLength = sql_query.value(2).toInt();
+            int startWeekDay = sql_query.value(3).toInt();
+            QString startTime = sql_query.value(4).toString();
+            int endWeekDay = sql_query.value(5).toInt();
+            QString endTime = sql_query.value(6).toString();
+            QString color = sql_query.value(7).toString();
+            QString teu = sql_query.value(8).toString();
+            QString type = sql_query.value(9).toString();
+            QString routeCode = sql_query.value(10).toString();
+            QString timeWindow = sql_query.value(11).toString();
+
+            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
+                   QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
+                    +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
+
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint);
+
+            QSqlQuery query_conf;
+
+            QString conf_sql;
+
+            conf_sql = "select START_POINT , END_POINT from BERTH where TERMINAL_CODE = '" + t._terminal_code + "' "
+                       "and ABS(SHIP_LIMIT-" + QString::number(shipLength)+ ") = (select MIN(ABS(SHIP_LIMIT-" + QString::number(shipLength) + ")) "
+                       "from BERTH where SHIP_LIMIT < "+ QString::number(shipLength) + " )  order by NICE ";
+
+            //qDebug()<< conf_sql;
+
+            if(!query_conf.exec(conf_sql))
+            {
+                qDebug()<<query_conf.lastError();
+            }
+            else
+            {
+                int flag = 0;
+                QPointF topLeft;
+                QPointF bottomRight;
+                int startBerthPoint;
+                int endBerthPoint;
+
+
+                while(query_conf.next())
+                {
+                    startBerthPoint = query_conf.value(0).toInt();
+                    endBerthPoint = query_conf.value(1).toInt();
+
+                    topLeft = PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint);
+                    bottomRight = PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint);
+
+
+                    QPair<QPointF,QPointF> pair;
+                    qreal x = -1;
+
+                    while (bottomRight.x() < (endBerthPoint + 100)){
+
+                        foreach( pair , list) {
+
+                            if (QRectF(topLeft,bottomRight).intersects(QRectF(pair.first,pair.second))){
+
+                                if (x < pair.second.x()){
+
+                                    x = pair.second.x() + 20;
+
+                                }
+
+                            }
+
+                        }
+
+                        if (x > 0){
+
+                            topLeft = PainterHelper::convertToScreenTopLeft(x-xOffset,startTime,startWeekDay,t._basePoint);
+                            bottomRight = PainterHelper::convertToScreenBottomRight(x-xOffset,shipLength,endTime,endWeekDay,t._basePoint);
+                            x = -1;
+
+                        }else{
+
+                            break;
+
+                        }
+
+                    }
+
+                    if (x < 0){
+                        flag = 1 ;
+                        break;
+                    }
+                }
+
+                if (flag == 1){
+
+                    routeRectangle->setStartPoint(topLeft);
+                    routeRectangle->setEndPoint(bottomRight);
+                    list.append(QPair<QPointF,QPointF>(topLeft,bottomRight));
+
+                }else{
+
+                    topLeft = PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint);
+                    bottomRight = PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint);
+                    routeRectangle->setStartPoint(topLeft);
+                    routeRectangle->setEndPoint(bottomRight);
+                    list.append(QPair<QPointF,QPointF>(topLeft,bottomRight));
+
+                }
+
+            }
+
+            routeRectangle->setToolTip(text);
+
+            routeRectangle->setFillColor(QColor(color));
+
+            scene->addItem(routeRectangle);
+
+            scene->setCurrentRect(routeRectangle);
+
+        }
+    }
+
+}
+
+void MainWindow::saveOneBerthData(const Terminal t)
+{
+    QSqlQuery sql;
+
+    QString update_sql = "update ROUTE_ARRANGEMENT set START_BERTH_POINT = :x1 , "
+                         "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y' "
+                         "where ROUTE_CODE = :x7 and TERMINAL_NAME = :x8 and TIME_WINDOW = :x9";
+    sql.prepare(update_sql);
+
+    QList<QGraphicsItem *> items = scene->items();
+
+    foreach (QGraphicsItem *item, items) {
+        if (item->type() == QGraphicsItem::UserType + 1) {  // 矩形
+
+            RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
+
+            sql.bindValue(":x1", PainterHelper::convertScreenToStartBerthPoint(routeItem->getStartPosScene(),t._basePoint));
+            sql.bindValue(":x2", PainterHelper::convertScreenToLength(routeItem->getStartPosScene(),routeItem->getEndPosScene()));
+            sql.bindValue(":x3", PainterHelper::convertScreenToStartWeekDay(routeItem->getStartPosScene(),t._basePoint));
+            sql.bindValue(":x4", PainterHelper::convertScreenToStartTime(routeItem->getStartPosScene(),t._basePoint));
+            sql.bindValue(":x5", PainterHelper::convertScreenToEndWeekDay(routeItem->getEndPosScene(),t._basePoint));
+            sql.bindValue(":x6", PainterHelper::convertScreenToEndTime(routeItem->getEndPosScene(),t._basePoint));
+            sql.bindValue(":x7", routeItem->getId2());
+            sql.bindValue(":x8", t._terminal_name);
+            sql.bindValue(":x9", routeItem->getId3());
+
+            if(!sql.exec())
+            {
+                qDebug() << sql.lastError();
+            }
+            else
+            {
+                qDebug() << "updated!";
+            }
+
+
+        }
+
+    }
+
+}
+
 
 

@@ -34,21 +34,21 @@ public:
         return hour*60+minute+(day-1)*24*60;
     }
 
-    static QPointF convertToScreenTopLeft(const int startBerthPonit, const QString &startTime,const int day)
+    static QPointF convertToScreenTopLeft(const int startBerthPonit, const QString &startTime,const int day,const QPointF &basePoint)
     {
         QPointF result;
-        result.setX(100+startBerthPonit);
+        result.setX(basePoint.x()+startBerthPonit);
 
-        result.setY(50+0.2*convertTimeToMinute(startTime,day));
+        result.setY(basePoint.y()+0.2*convertTimeToMinute(startTime,day));
         return result;
     }
 
-    static QPointF convertToScreenBottomRight(const int startBerthPoint, const int length, const QString &endTime,const int day)
+    static QPointF convertToScreenBottomRight(const int startBerthPoint, const int length, const QString &endTime,const int day,const QPointF &basePoint)
     {
         QPointF result;
-        result.setX(100+startBerthPoint+length);
+        result.setX(basePoint.x()+startBerthPoint+length);
 
-        result.setY(50+0.2*convertTimeToMinute(endTime,day));
+        result.setY(basePoint.y()+0.2*convertTimeToMinute(endTime,day));
         return result;
     }
 
@@ -57,10 +57,10 @@ public:
         return bottomRight.x() - topLeft.x();
     }
 
-    static QString convertScreenToStartTime(const QPointF &topLeft)
+    static QString convertScreenToStartTime(const QPointF &topLeft,const QPointF &basePoint)
     {
         int passByMinute;
-        passByMinute = (qRound((topLeft.y())-50)*5) % (24 * 60);
+        passByMinute = (qRound((topLeft.y())-basePoint.y())*5) % (24 * 60);
 
 
 
@@ -77,15 +77,15 @@ public:
 
     }
 
-    static int convertScreenToStartBerthPoint(const QPointF &topLeft)
+    static int convertScreenToStartBerthPoint(const QPointF &topLeft,const QPointF &basePoint)
     {
-        return topLeft.x() - 100;
+        return topLeft.x() - basePoint.x();
     }
 
-    static QString convertScreenToEndTime(const QPointF &bottomRight)
+    static QString convertScreenToEndTime(const QPointF &bottomRight,const QPointF &basePoint)
     {
         int passByMinute;
-        passByMinute = (qRound((bottomRight.y())-50)*5) % (24 * 60);
+        passByMinute = (qRound((bottomRight.y())-basePoint.y())*5) % (24 * 60);
 
         int minute = passByMinute % 60;
 
@@ -94,14 +94,14 @@ public:
         return QString("%1").arg(hour,2,10,QLatin1Char('0'))+":"+QString("%1").arg(minute,2,10,QLatin1Char('0'));
     }
 
-    static int convertScreenToStartWeekDay(const QPointF &topLeft)
+    static int convertScreenToStartWeekDay(const QPointF &topLeft,const QPointF &basePoint)
     {
-        return (qRound((topLeft.y())-50)*5) / (24 * 60) + 1;
+        return (qRound((topLeft.y())-basePoint.y())*5) / (24 * 60) + 1;
     }
 
-    static int convertScreenToEndWeekDay(const QPointF &bottomRight)
+    static int convertScreenToEndWeekDay(const QPointF &bottomRight,const QPointF &basePoint)
     {
-        return (qRound((bottomRight.y())-50)*5) / (24 * 60) + 1;
+        return (qRound((bottomRight.y())-basePoint.y())*5) / (24 * 60) + 1;
     }
 
 };
@@ -176,7 +176,7 @@ protected:
 class RouteRectangle : public QGraphicsItem
 {
 public:
-    RouteRectangle(QGraphicsItem *parent = 0,QString text = "",QString id = "");
+    RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3, QPointF basePoint);
     ~RouteRectangle();
 
     QRectF boundingRect() const override;
@@ -189,13 +189,17 @@ public:
 
     QString getText();
 
-    QString getId();
+    QString getId1();
+    QString getId2();
+    QString getId3();
 
     QPointF getStartPosScene();
 
     QPointF getEndPosScene();
 
     QRectF resizeHandle() const;
+
+    QPointF getBasePoint();
 
     static const QSizeF minSize;
 
@@ -204,13 +208,16 @@ public:
 protected:
 
     QString m_text;
-    QString m_id;
+    QString m_id_1;
+    QString m_id_2;
+    QString m_id_3;
     QPointF m_startPosScene;
     QPointF m_endPosScene;
     QRectF m_rcBounding;
     QColor m_fillColor;
 
-    QPointF m_centerPointF;
+    QPointF m_basePoint;
+
     bool m_bResizing;
     bool m_resizeHandlePressed;
     QPointF m_mousePressOffset;
@@ -234,6 +241,7 @@ public:
     void setZoomDelta(qreal delta);
     qreal zoomDelta() const;
     void closeEvent(QCloseEvent *event);
+    void setHeight(int height);
 signals:
 
     void exit(int type);
@@ -248,6 +256,7 @@ public slots:
 private:
     qreal m_zoomDelta;  // 缩放的增量
     qreal m_scale;  // 缩放值
+    int m_height;
 
 };
 
