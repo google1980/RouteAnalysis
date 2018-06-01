@@ -18,7 +18,7 @@ FormNavigationQuery::FormNavigationQuery(QWidget *parent) :
 
     ui->tableView->setModel(model);
 
-    //ui->tableView->setItemDelegate();
+    ui->tableView->setColumnWidth(1, 150);
 
     connect(ui->submitButton, SIGNAL(clicked()), this, SLOT(OnSubmit()));
     connect(ui->insertButton, SIGNAL(clicked()), this, SLOT(OnInsert()));

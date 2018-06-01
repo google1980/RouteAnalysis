@@ -18,8 +18,8 @@ FormTerminalQuery::FormTerminalQuery(QWidget *parent) :
     model->setHeaderData(2, Qt::Horizontal, QString::fromUtf8("码头长度"));
     model->setHeaderData(3, Qt::Horizontal, QString::fromUtf8("显示天数"));
     model->setHeaderData(4, Qt::Horizontal, QString::fromUtf8("是否当前")  );
-    model->setHeaderData(5, Qt::Horizontal, QString::fromUtf8("X轴偏移量")  );
-    model->setHeaderData(6, Qt::Horizontal, QString::fromUtf8("Y轴偏移量")  );
+    model->setHeaderData(5, Qt::Horizontal, QString::fromUtf8("原点X坐标")  );
+    model->setHeaderData(6, Qt::Horizontal, QString::fromUtf8("原点Y坐标")  );
 
     ui->tableView->setModel(model);
 

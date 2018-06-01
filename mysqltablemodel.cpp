@@ -13,7 +13,7 @@ QVariant MySqlTableModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::BackgroundRole) {
 
-        if (index.column() == 1)
+        if ((index.column() == 1) && (index.data().toString().isEmpty() == false))
         {
             QColor color = QColor(index.data().toString());
             return QBrush(color);
