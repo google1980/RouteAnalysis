@@ -1,6 +1,10 @@
 ﻿#ifndef FORMBERTHCONFIG_H
 #define FORMBERTHCONFIG_H
 
+#ifdef WIN32
+#pragma execution_character_set("utf-8")
+#endif
+
 #include <QWidget>
 #include <QSqlTableModel>
 

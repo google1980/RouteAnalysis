@@ -487,7 +487,7 @@ PainterView::PainterView(QWidget *parent)
 {
     setRenderHint(QPainter::Antialiasing,true);
     setAttribute(Qt::WA_DeleteOnClose);
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 }
 
 PainterView::~PainterView()
@@ -515,6 +515,7 @@ void PainterView::wheelEvent(QWheelEvent *event)
     QPoint scrollAmount = event->angleDelta();
     // 正值表示滚轮远离使用者（放大），负值表示朝向使用者（缩小）
     scrollAmount.y() > 0 ? zoomIn() : zoomOut();
+    QGraphicsView::wheelEvent(event);
 }
 
 // 放大
@@ -534,11 +535,17 @@ void PainterView::zoom(float scaleFactor)
 {
     // 防止过小或过大
     qreal factor = transform().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-    if (factor < 0.07 || factor > 100)
+    if (factor < 0.1 || factor > 100)
         return;
-
+    //
     scale(scaleFactor, scaleFactor);
+
+
+
     m_scale *= scaleFactor;
+
+    //this->resetMatrix();
+
 }
 
 

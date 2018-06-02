@@ -525,7 +525,7 @@ void MainWindow::importExcel()
 {
     QString xlsFile = QFileDialog::getOpenFileName(this,QString(),QString(),"excel(*.xls *.xlsx)");
     if(xlsFile.isEmpty())
-            return;
+        return;
 
     QAxObject excel("Excel.Application");
     excel.setProperty("Visible", false);
@@ -546,18 +546,22 @@ void MainWindow::importExcel()
         QVariant var = used_range->dynamicCall("Value");
 
         if(NULL == used_range || used_range->isNull()){
+            work_book->dynamicCall("Close(Boolean)", false);
+            excel.dynamicCall("Quit(void)");
             return;
         }
-
-
 
         QList<QList<QVariant> > list;
 
         castVariant2ListListVariant(var,list);
 
+        qDebug()<< list.at(0).count();
+
         if (list.at(0).count() != 14)
         {
-            QMessageBox::warning(NULL,"error",QString::fromUtf8("Excel文件格式不正确,请检查!!!"),QMessageBox::Apply);
+            QMessageBox::critical(NULL,QString::fromUtf8("错误"),QString::fromUtf8("Excel文件格式不正确,请检查!!!"),QMessageBox::Close);
+            work_book->dynamicCall("Close(Boolean)", false);
+            excel.dynamicCall("Quit(void)");
             return;
         }
 
@@ -570,8 +574,6 @@ void MainWindow::importExcel()
 
             progressBar->setRange(0,100);
             progressBar->setValue(0);
-
-            //query.exec(QObject::tr("delete from ROUTE_ARRANGEMENT"));
 
             query.prepare("insert into ROUTE_ARRANGEMENT(TERMINAL_NAME, ROUTE_NAME,ROUTE_CODE,NAVIGATION_NAME,SHIP_LENGTH, "
                           "TEU ,TYPE ,START_WEEK_DAY ,START_TIME ,END_WEEK_DAY ,END_TIME,START_BERTH_POINT,IS_LOCKED,OPERATOR,PORT,AGENT,TIME_WINDOW)"
@@ -701,7 +703,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
     QList<QPair <QPointF,QPointF>> list;
 
     select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW"
-                 " from ROUTE_ARRANGEMENT,NAVIGATION, where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
+                 " from ROUTE_ARRANGEMENT,NAVIGATION where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"'";
     if(!sql_query.exec(select_sql))
     {
@@ -753,13 +755,13 @@ void MainWindow::drawOneBerthMap(const Terminal t)
                  " from ROUTE_ARRANGEMENT,NAVIGATION "
                  "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"' order by SHIP_LENGTH desc ";
+
     if(!sql_query.exec(select_sql))
     {
         qDebug()<<sql_query.lastError();
     }
     else
     {
-
         while(sql_query.next())
         {
             QString routeName = sql_query.value(0).toString();
@@ -816,7 +818,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
                     QPair<QPointF,QPointF> pair;
                     qreal x = -1;
 
-                    while (bottomRight.x() < (endBerthPoint + 100)){
+                    while (bottomRight.x() < (endBerthPoint + t._basePoint.x())){
 
                         foreach( pair , list) {
 
@@ -824,7 +826,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
                                 if (x < pair.second.x()){
 
-                                    x = pair.second.x() + 20;
+                                    x = pair.second.x() + 10;
 
                                 }
 
