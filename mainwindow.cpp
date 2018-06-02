@@ -791,8 +791,6 @@ void MainWindow::drawOneBerthMap(const Terminal t)
                        "and ABS(SHIP_LIMIT-" + QString::number(shipLength)+ ") = (select MIN(ABS(SHIP_LIMIT-" + QString::number(shipLength) + ")) "
                        "from BERTH where SHIP_LIMIT < "+ QString::number(shipLength) + " )  order by NICE ";
 
-            //qDebug()<< conf_sql;
-
             if(!query_conf.exec(conf_sql))
             {
                 qDebug()<<query_conf.lastError();
