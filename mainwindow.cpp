@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.0.2"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.1.0"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 
@@ -374,7 +374,7 @@ void MainWindow::exportPDF()
 
     QString fileName;
     fileName = QFileDialog::getSaveFileName(this,
-        tr("PDF"), terminals.at(0)._terminal_name, tr("PDF Files (*.pdf)"));
+        tr("PDF"), QString::fromUtf8("航线泊位图"), tr("PDF Files (*.pdf)"));
 
     if (!fileName.isNull())
     {
