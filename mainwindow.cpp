@@ -905,8 +905,9 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     if (sumList.count()>0){
 
-        int rows = sumList.count() / 8 + 1;
+
         int cols = (t._terminal_len / 8 / 75) * 4;
+        int rows = sumList.count() / cols + 1;
 
         sumList.append(QString::fromUtf8("总计"));
         sumList.append(QString::number(total));
