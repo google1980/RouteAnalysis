@@ -166,6 +166,26 @@ void MainWindow::saveData()
     }
 }
 
+void MainWindow::gradient()
+{
+    if (scene->items().count() != 0){
+
+        if (PainterHelper::isGradient == 0)
+            PainterHelper::isGradient = 1;
+        else
+            PainterHelper::isGradient = 0;
+
+        scene->update();
+
+    }else{
+
+        qDebug() << "view is not opened.";
+
+    }
+
+
+}
+
 void MainWindow::lock()
 {
     if (scene->items().count() != 0){
@@ -334,7 +354,7 @@ void MainWindow::newFile()
 
             QGraphicsTextItem * text = scene->addText(t._terminal_name, QFont("Microsoft YaHei", 18, 75, true));
             text->setPos(t._basePoint.x()-50,t._basePoint.y()-40);
-            text->setDefaultTextColor(QColor(0, 0, 0, 50));
+            text->setDefaultTextColor(QColor(0, 0, 0, 200));
 
             terminals.append(t);
             drawOneBerthMap(t);
@@ -361,6 +381,7 @@ void MainWindow::newFile()
     lockAct->setEnabled(true);
     unlockAct->setEnabled(true);
     undoAct->setEnabled(true);
+    gradientAct->setEnabled(true);
 }
 
 void MainWindow::exportPDF()
@@ -442,6 +463,13 @@ void MainWindow::createActions()
     connect(undoAct, &QAction::triggered, this, &MainWindow::undo);
     toolBar->addAction(undoAct);
     undoAct->setDisabled(true);
+
+    const QIcon gradientIcon = QIcon::fromTheme("document-gradient", QIcon(":/images/painter.png"));
+    gradientAct = new QAction(gradientIcon, QString::fromUtf8("色彩"), this);
+    gradientAct->setStatusTip(tr("Gradient"));
+    connect(gradientAct, &QAction::triggered, this, &MainWindow::gradient);
+    toolBar->addAction(gradientAct);
+    gradientAct->setDisabled(true);
 
     const QIcon queryIcon = QIcon::fromTheme("document-query", QIcon(":/images/open.png"));
     queryAct = new QAction(queryIcon, QString::fromUtf8("航线数据"), this);
@@ -644,6 +672,7 @@ void MainWindow::childWinExit(int type)
          lockAct->setDisabled(true);
          unlockAct->setDisabled(true);
          undoAct->setDisabled(true);
+         gradientAct->setDisabled(true);
          break;
      default:
          break;

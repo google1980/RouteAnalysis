@@ -52,6 +52,7 @@ private slots:
     void clean();
     void about();
     void updateWindowMenu();
+    void gradient();
 
     void drawOneBerthMap(const Terminal t);
     void saveOneBerthData(const Terminal t);
@@ -82,6 +83,7 @@ private:
     QAction *cleanAct;
     QAction *closeAct;
     QAction *closeAllAct;
+    QAction *gradientAct;
 
     PainterScene *scene;
 

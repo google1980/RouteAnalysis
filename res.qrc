@@ -14,5 +14,6 @@
         <file>images/unlock.png</file>
         <file>images/undo.png</file>
         <file>images/clean.png</file>
+        <file>images/painter.png</file>
     </qresource>
 </RCC>

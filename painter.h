@@ -14,6 +14,8 @@ public:
 
     static QMap<int, QString> weekMap;
 
+    static int isGradient;
+
     static void initMap();
 
     static QGradient gradient(const QColor &color, const QRectF &rect)

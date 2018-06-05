@@ -6,6 +6,8 @@ const QSizeF RouteRectangle::minSize(80, 50);
 
 QMap<int,QString> PainterHelper::weekMap;
 
+int PainterHelper::isGradient = 1;
+
 void PainterHelper::initMap()
 {
     PainterHelper::weekMap.insert(1,QString::fromUtf8("周一"));
@@ -138,9 +140,10 @@ void XAxis::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
 
     painter->save();
 
-    //painter->drawLine(m_startX,50,m_endX,50);
-
     painter->drawLine(m_line);
+    QFont font;
+    font.setPixelSize(16);
+    painter->setFont(font);
 
     for (int i = 1 ; i<=50 ; i++ ){
 
@@ -150,6 +153,7 @@ void XAxis::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
 
         }else{
             painter->drawLine(m_rcBounding.bottomLeft().x()+i*100,0,m_rcBounding.bottomLeft().x()+i*100,-10);
+
             painter->drawText(m_rcBounding.bottomLeft().x()+i*100-10,-15,QString::number(i*100));
         }
 
@@ -217,6 +221,9 @@ void YAxis::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
 
     //painter->drawLine(100,m_startY,100,m_endY);
     painter->drawLine(m_line);
+    QFont font;
+    font.setPixelSize(16);
+    painter->setFont(font);
 
     for (int i = 1 ; i<=100 ; i++ ){
 
@@ -415,7 +422,11 @@ void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     Q_UNUSED(widget);
 
     painter->save();
-    painter->setBrush(PainterHelper::gradient(m_fillColor, m_rcBounding));
+    if (PainterHelper::isGradient)
+        painter->setBrush(PainterHelper::gradient(m_fillColor, m_rcBounding));
+    else
+        painter->setBrush(m_fillColor);
+
     painter->setPen((option->state & QStyle::State_Selected) ? Qt::DashDotDotLine : Qt::SolidLine);
 
 
