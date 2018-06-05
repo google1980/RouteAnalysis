@@ -240,6 +240,77 @@ QRectF YAxis::boundingRect() const
     return m_rcBounding;
 }
 
+RouteTable::RouteTable(QGraphicsItem *parent,int rows,int cols,int cellWidth,int cellHeight,QPointF basePoint)
+    : QGraphicsItem(parent)
+    , m_rows(rows)
+    , m_cols(cols)
+    , m_cellWidth(cellWidth)
+    , m_cellHeight(cellHeight)
+    , m_basePoint(basePoint)
+    , m_rcBounding(0,0,0,0)
+{
+    m_rcBounding.setTopLeft(basePoint);
+    m_rcBounding.setHeight(rows*cellHeight);
+    m_rcBounding.setWidth(cols*cellWidth);
+}
+
+void RouteTable::setContentList(const QList<QString> &contents)
+{
+    m_contents = contents;
+}
+
+RouteTable::~RouteTable()
+{
+
+}
+
+QRectF RouteTable::boundingRect() const
+{
+    return m_rcBounding;
+}
+
+void RouteTable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    Q_UNUSED(widget);
+
+    painter->save();
+
+
+    qreal startX = m_basePoint.x();
+    qreal startY = m_basePoint.y();
+    int i = 0;
+
+    for (int row = 0; row<=m_rows; row++){
+
+        for (int col = 0; col<m_cols; col++ ){
+
+            painter->drawLine(startX + col*m_cellWidth,startY + row*m_cellHeight,startX + col*m_cellWidth + m_cellWidth,startY + row*m_cellHeight);
+
+            if (row > 0 && i < m_contents.count())
+            {
+                QFont font;
+                font.setBold(true);
+                font.setPixelSize(15);
+                painter->setFont(font);
+                painter->drawText(startX + col*m_cellWidth+4,startY + row*m_cellHeight-4,m_contents.at(i++));
+            }
+
+        }
+    }
+
+    for (int col = 0; col<=m_cols; col++){
+
+        for (int row = 0; row<m_rows; row++ ){
+
+            painter->drawLine(startX + col*m_cellWidth,startY + row*m_cellHeight,startX + col*m_cellWidth,startY + row*m_cellHeight + m_cellHeight);
+
+        }
+    }
+
+    painter->restore();
+
+}
+
 RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint)
     : QGraphicsItem(parent)
     , m_text(text)
@@ -346,12 +417,24 @@ void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->save();
     painter->setBrush(PainterHelper::gradient(m_fillColor, m_rcBounding));
     painter->setPen((option->state & QStyle::State_Selected) ? Qt::DashDotDotLine : Qt::SolidLine);
+
+
     painter->drawRect(m_rcBounding);
 
     QString text = m_text;
 
     QFont font;
-    font.setPixelSize(15);
+    font.setBold(true);
+    if (m_rcBounding.width() > 300 && m_rcBounding.height() > 200) {
+
+        font.setPixelSize(20);
+
+    }else{
+
+        font.setPixelSize(15);
+
+    }
+
     painter->setFont(font);
 
     QFontMetrics fm = painter->fontMetrics();
@@ -360,7 +443,9 @@ void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 
     rect.adjust(4,4,-4,-4);
 
-    int writeWidth =  (rect.height() / fm.height() -1) * rect.width() ;
+    int writeWidth =  ((rect.height()-8) / fm.height() -1) * (rect.width()-8) ;
+
+    rect.adjust(-10,-10,10,10);
 
     QString strElidedText = fm.elidedText(text, Qt::ElideRight, writeWidth, Qt::TextShowMnemonic);
 
@@ -634,7 +719,3 @@ YAxis * PainterScene::getYAxis()
 {
     return m_yAxis;
 }
-
-
-
-

@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.1.0"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.2.0"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 
@@ -299,7 +299,7 @@ void MainWindow::newFile()
 
     view->setScene(scene);
 
-    view->setSceneRect(0,0,500,500);
+    view->setSceneRect(0,0,500,1500);
 
     QMdiSubWindow * subWindow = mdiArea->addSubWindow(view);
 
@@ -668,6 +668,8 @@ void MainWindow::castVariant2ListListVariant(const QVariant &var, QList<QList<QV
 
 void MainWindow::drawOneBerthMap(const Terminal t)
 {
+
+
     QSqlQuery sql_query;
 
     QString select_sql = "select TERMINAL_NAME,TERMINAL_CODE,TERMINAL_LEN,DAY from TERMINAL where ENABLED = 'Y' ";
@@ -880,6 +882,46 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
         }
     }
+
+    QList<QString> sumList;
+    int total = 0;
+
+    select_sql = "select NAVIGATION_NAME,count(*) "
+                 " from ROUTE_ARRANGEMENT "
+                 "where TERMINAL_NAME = '" + t._terminal_name +"' group by NAVIGATION_NAME ";
+    if(!sql_query.exec(select_sql))
+    {
+        qDebug()<<sql_query.lastError();
+    }
+    else
+    {
+        while(sql_query.next())
+        {
+            sumList.append(sql_query.value(0).toString());
+            sumList.append(sql_query.value(1).toString());
+            total = total + sql_query.value(1).toInt();
+        }
+    }
+
+    if (sumList.count()>0){
+
+        int rows = sumList.count() / 8 + 1;
+        int cols = (t._terminal_len / 4 / 75) * 2;
+
+        sumList.append(QString::fromUtf8("总计"));
+        sumList.append(QString::number(total));
+
+        RouteTable * routeTable = new RouteTable(0,rows,cols,75,20,QPointF(t._basePoint.x()+10,t._basePoint.y()+24*12*t._terminal_day));
+
+        routeTable->setContentList(sumList);
+        scene->addItem(routeTable);
+
+    }
+
+
+
+
+
 
 }
 

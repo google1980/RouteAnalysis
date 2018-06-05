@@ -292,4 +292,23 @@ protected:
 
 };
 
+class RouteTable : public QGraphicsItem
+{
+public:
+    RouteTable(QGraphicsItem *parent,int rows,int cols,int cellWidth,int cellHeight,QPointF basePoint);
+    ~RouteTable();
+    void setContentList(const QList<QString> &contents);
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+protected:
+
+    int m_rows;
+    int m_cols;
+    int m_cellWidth;
+    int m_cellHeight;
+    QPointF m_basePoint;
+    QList<QString> m_contents;
+    QRectF m_rcBounding;
+};
+
 #endif // PAINTER_H
