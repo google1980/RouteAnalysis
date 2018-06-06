@@ -381,9 +381,10 @@ QPointF RouteRectangle::getEndPosScene()
 {
     return m_endPosScene;
 }
-void RouteRectangle::setFillColor(const QColor &color)
+void RouteRectangle::setFillColor(const QColor &color,const int alpha)
 {
     m_fillColor = color;
+    m_fillColor.setAlpha(alpha);
 
 }
 

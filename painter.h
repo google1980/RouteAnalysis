@@ -191,7 +191,7 @@ public:
 
     void setStartPoint(const QPointF &pos);
     void setEndPoint(const QPointF &pos);
-    void setFillColor(const QColor &color);
+    void setFillColor(const QColor &color,const int alpha);
 
     QString getText();
 

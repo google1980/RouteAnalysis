@@ -71,7 +71,7 @@ void MainWindow::clean()
         //query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar,X_OFFSET integer DEFAULT 100, Y_OFFSET integer DEFAULT 50 )"));
         query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, "
                                    "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar)"));
-        //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar)"));
+        //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar,ALPHA integer DEFAULT 200 )"));
 
     } else {
 
@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.2.0"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.5.0"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 
@@ -417,6 +417,8 @@ void MainWindow::createStatusBar()
 
     statusBar->addPermanentWidget(progressBar);
     progressBar->setHidden(true);
+    //slider->setwi
+    //statusBar->addPermanentWidget(slider);
 
 }
 
@@ -469,6 +471,7 @@ void MainWindow::createActions()
     gradientAct->setStatusTip(tr("Gradient"));
     connect(gradientAct, &QAction::triggered, this, &MainWindow::gradient);
     toolBar->addAction(gradientAct);
+
     gradientAct->setDisabled(true);
 
     const QIcon queryIcon = QIcon::fromTheme("document-query", QIcon(":/images/open.png"));
@@ -733,7 +736,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     QList<QPair <QPointF,QPointF>> list;
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA"
                  " from ROUTE_ARRANGEMENT,NAVIGATION where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"'";
     if(!sql_query.exec(select_sql))
@@ -756,6 +759,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString type = sql_query.value(9).toString();
             QString routeCode = sql_query.value(10).toString();
             QString timeWindow = sql_query.value(11).toString();
+            int alpha = sql_query.value(12).toInt();
 
             QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
@@ -768,7 +772,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
             routeRectangle->setToolTip(text);
 
-            routeRectangle->setFillColor(QColor(color));
+            routeRectangle->setFillColor(QColor(color),alpha);
 
             scene->addItem(routeRectangle);
 
@@ -782,7 +786,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     //未lock的数据自动排一遍
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA"
                  " from ROUTE_ARRANGEMENT,NAVIGATION "
                  "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"' order by SHIP_LENGTH desc ";
@@ -807,6 +811,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString type = sql_query.value(9).toString();
             QString routeCode = sql_query.value(10).toString();
             QString timeWindow = sql_query.value(11).toString();
+            int alpha = sql_query.value(12).toInt();
 
             QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
@@ -903,7 +908,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
             routeRectangle->setToolTip(text);
 
-            routeRectangle->setFillColor(QColor(color));
+            routeRectangle->setFillColor(QColor(color),alpha);
 
             scene->addItem(routeRectangle);
 
