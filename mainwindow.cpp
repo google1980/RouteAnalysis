@@ -343,7 +343,6 @@ void MainWindow::newFile()
 
             Terminal t;
 
-
             t._terminal_name = sql_query.value(0).toString();
             t._terminal_code = sql_query.value(1).toString();
             t._terminal_len = sql_query.value(2).toInt();
@@ -568,6 +567,7 @@ void MainWindow::importExcel()
 
     QSqlQuery query;
     QSqlQuery del;
+    QSqlQuery insert;
 
     if(sheet_count > 0)
     {
@@ -597,7 +597,9 @@ void MainWindow::importExcel()
         }
 
 
-        int row_count = list.count() ;
+        int row_count = list.count();
+
+
 
         if (row_count > 0){
 
@@ -606,54 +608,68 @@ void MainWindow::importExcel()
             progressBar->setRange(0,100);
             progressBar->setValue(0);
 
-            query.prepare("insert into ROUTE_ARRANGEMENT(TERMINAL_NAME, ROUTE_NAME,ROUTE_CODE,NAVIGATION_NAME,SHIP_LENGTH, "
+            insert.prepare("insert into ROUTE_ARRANGEMENT(TERMINAL_NAME, ROUTE_NAME,ROUTE_CODE,NAVIGATION_NAME,SHIP_LENGTH, "
                           "TEU ,TYPE ,START_WEEK_DAY ,START_TIME ,END_WEEK_DAY ,END_TIME,START_BERTH_POINT,IS_LOCKED,OPERATOR,PORT,AGENT,TIME_WINDOW)"
                                   "values(:TERMINAL_NAME, :ROUTE_NAME, :ROUTE_CODE, :NAVIGATION_NAME, :SHIP_LENGTH,:TEU,:TYPE,"
                           ":START_WEEK_DAY,:START_TIME,:END_WEEK_DAY,:END_TIME,:START_BERTH_POINT,:IS_LOCKED,:OPERATOR,:PORT,:AGENT,:TIME_WINDOW)");
 
-            del.prepare("delete from ROUTE_ARRANGEMENT where TERMINAL_NAME = :TERMINAL_NAME and ROUTE_CODE = :ROUTE_CODE and TIME_WINDOW = :TIME_WINDOW");
+            del.prepare("delete from ROUTE_ARRANGEMENT where ROUTE_CODE = :ROUTE_CODE ");
+
+            query.prepare("select count(*) from ROUTE_ARRANGEMENT where TERMINAL_NAME = :x1 and ROUTE_CODE = :x2 and TIME_WINDOW = :x3 ");
 
             for (int i =0 ;i < row_count ; i++){
 
-                del.bindValue(0,list.at(i).at(2).toString());
-                del.bindValue(1,list.at(i).at(4).toString());
-                del.bindValue(2,list.at(i).at(5).toString());
-                del.exec();
-
                 query.bindValue(0,list.at(i).at(2).toString());
-                query.bindValue(1,list.at(i).at(3).toString());
-                query.bindValue(2,list.at(i).at(4).toString());
-                query.bindValue(3,list.at(i).at(6).toString());
-                query.bindValue(4,qCeil((list.at(i).at(11).toString().mid(list.at(i).at(11).toString().indexOf("U")+3,list.at(i).at(11).toString().indexOf("-") - list.at(i).at(11).toString().indexOf("U") - 3)).toFloat()));
-                query.bindValue(5,list.at(i).at(8).toString());
-                query.bindValue(6,list.at(i).at(11).toString());
+                query.bindValue(1,list.at(i).at(4).toString());
+                query.bindValue(2,list.at(i).at(5).toString());
 
-                int startDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(0,2));
-                int endDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+1,2));
-                query.bindValue(7,startDay);
-
-                if (startDay > endDay)
+                if(query.exec())
                 {
-                    endDay = endDay + 7;
+                    query.next();
+                    int count = query.value(0).toInt();
+
+                    if (count > 0){
+                        continue;
+                    }else{
+                        del.bindValue(0,list.at(i).at(4).toString());
+                        del.exec();
+
+                        insert.bindValue(0,list.at(i).at(2).toString());
+                        insert.bindValue(1,list.at(i).at(3).toString());
+                        insert.bindValue(2,list.at(i).at(4).toString());
+                        insert.bindValue(3,list.at(i).at(6).toString());
+                        insert.bindValue(4,qCeil((list.at(i).at(11).toString().mid(list.at(i).at(11).toString().indexOf("U")+3,list.at(i).at(11).toString().indexOf("-") - list.at(i).at(11).toString().indexOf("U") - 3)).toFloat()));
+                        insert.bindValue(5,list.at(i).at(8).toString());
+                        insert.bindValue(6,list.at(i).at(11).toString());
+
+                        int startDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(0,2));
+                        int endDay = PainterHelper::weekMap.key(list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+1,2));
+                        insert.bindValue(7,startDay);
+
+                        if (startDay > endDay)
+                        {
+                            endDay = endDay + 7;
+                        }
+
+                        insert.bindValue(8,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-4,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-2,2));
+
+                        insert.bindValue(9,endDay);
+                        insert.bindValue(10,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+3,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+5,2));
+                        insert.bindValue(11,0);
+                        insert.bindValue(12,"N");
+                        insert.bindValue(13,list.at(i).at(7).toString());
+                        insert.bindValue(14,list.at(i).at(9).toString());
+                        insert.bindValue(15,list.at(i).at(10).toString());
+                        insert.bindValue(16,list.at(i).at(5).toString());
+
+                        insert.exec();
+
+                    }
+                    progressBar->setValue( i *100 / row_count );
+
                 }
-
-                query.bindValue(8,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-4,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")-2,2));
-
-                query.bindValue(9,endDay);
-                query.bindValue(10,list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+3,2)+":"+list.at(i).at(5).toString().mid(list.at(i).at(5).toString().indexOf("-")+5,2));
-                query.bindValue(11,0);
-                query.bindValue(12,"N");
-                query.bindValue(13,list.at(i).at(7).toString());
-                query.bindValue(14,list.at(i).at(9).toString());
-                query.bindValue(15,list.at(i).at(10).toString());
-                query.bindValue(16,list.at(i).at(5).toString());
-
-                query.exec();
-
-                progressBar->setValue( i *100 / row_count );
-
+                qDebug()<<query.lastError();
             }
-
         }
     }
 
@@ -966,7 +982,7 @@ void MainWindow::saveOneBerthData(const Terminal t)
 
     QString update_sql = "update ROUTE_ARRANGEMENT set START_BERTH_POINT = :x1 , "
                          "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y' "
-                         "where ROUTE_CODE = :x7 and TERMINAL_NAME = :x8 and TIME_WINDOW = :x9";
+                         "where ROUTE_CODE = :x7 and TERMINAL_NAME = :x8 ";
     sql.prepare(update_sql);
 
     QList<QGraphicsItem *> items = scene->items();
@@ -984,7 +1000,6 @@ void MainWindow::saveOneBerthData(const Terminal t)
             sql.bindValue(":x6", PainterHelper::convertScreenToEndTime(routeItem->getEndPosScene(),t._basePoint));
             sql.bindValue(":x7", routeItem->getId2());
             sql.bindValue(":x8", t._terminal_name);
-            sql.bindValue(":x9", routeItem->getId3());
 
             if(!sql.exec())
             {
