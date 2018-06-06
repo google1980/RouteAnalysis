@@ -6,7 +6,7 @@ const QSizeF RouteRectangle::minSize(80, 50);
 
 QMap<int,QString> PainterHelper::weekMap;
 
-int PainterHelper::isGradient = 1;
+int PainterHelper::isGradient = 0;
 
 void PainterHelper::initMap()
 {
