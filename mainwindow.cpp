@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.5.0"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.6.0"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 

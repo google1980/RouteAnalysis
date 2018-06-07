@@ -15,7 +15,7 @@ FormNavigationQuery::FormNavigationQuery(QWidget *parent) :
 
     model->setHeaderData(0, Qt::Horizontal, QString::fromUtf8("航区"));
     model->setHeaderData(1, Qt::Horizontal, QString::fromUtf8("颜色"));
-    model->setHeaderData(2, Qt::Horizontal, QString::fromUtf8("透明度"));
+    model->setHeaderData(2, Qt::Horizontal, QString::fromUtf8("透明度(0~255)"));
 
     ui->tableView->setModel(model);
 
