@@ -327,6 +327,8 @@ void MainWindow::newFile()
 
     subWindow->resize(QSize(1200,400));
 
+    subWindow->setAttribute(Qt::WA_DeleteOnClose);
+
     int y = 0;
     int day = 0;
 
