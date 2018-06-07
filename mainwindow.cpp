@@ -323,6 +323,8 @@ void MainWindow::newFile()
 
     QMdiSubWindow * subWindow = mdiArea->addSubWindow(view);
 
+    view->setParent(subWindow);
+
     subWindow->resize(QSize(1200,400));
 
     int y = 0;
