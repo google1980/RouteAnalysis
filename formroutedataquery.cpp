@@ -34,6 +34,7 @@ FormRouteDataQuery::FormRouteDataQuery(QWidget *parent) :
     model->setHeaderData(14, Qt::Horizontal, QString::fromUtf8("靠泊起点")  );
     model->setHeaderData(15, Qt::Horizontal, QString::fromUtf8("锁定标识")  );
     model->setHeaderData(16, Qt::Horizontal, QString::fromUtf8("时间窗口")  );
+    model->setHeaderData(17, Qt::Horizontal, QString::fromUtf8("字体尺寸")  );
 
     ui->tableView->setModel(model);
     connect(ui->submitButton, SIGNAL(clicked()), this, SLOT(OnSubmit()));

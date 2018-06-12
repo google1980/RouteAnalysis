@@ -182,7 +182,7 @@ protected:
 class RouteRectangle : public QGraphicsItem
 {
 public:
-    RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3, QPointF basePoint);
+    RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3, QPointF basePoint,int fontSize);
     ~RouteRectangle();
 
     QRectF boundingRect() const override;
@@ -207,6 +207,10 @@ public:
 
     QPointF getBasePoint();
 
+    void setFontSize(int fontSize);
+
+    int getFontSize();
+
     static const QSizeF minSize;
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
@@ -221,7 +225,7 @@ protected:
     QPointF m_endPosScene;
     QRectF m_rcBounding;
     QColor m_fillColor;
-
+    int m_font_size;
     QPointF m_basePoint;
 
     bool m_bResizing;
@@ -280,6 +284,9 @@ public:
     YAxis * getYAxis();
 
     void setCurrentRect(RouteRectangle * routeRectangle);
+
+public slots:
+    void textSize(const QString &p);
 
 protected:
 

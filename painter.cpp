@@ -279,6 +279,7 @@ QRectF RouteTable::boundingRect() const
 void RouteTable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
+    Q_UNUSED(option);
 
     painter->save();
 
@@ -318,7 +319,7 @@ void RouteTable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
 }
 
-RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint)
+RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint,int fontSize)
     : QGraphicsItem(parent)
     , m_text(text)
     , m_id_1(id1)
@@ -326,6 +327,7 @@ RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QS
     , m_id_3(id3)
     , m_rcBounding(0,0,0,0)
     , m_basePoint(basePoint)
+    , m_font_size(fontSize)
 {
     setFlags(QGraphicsItem::ItemIsSelectable|QGraphicsItem::ItemSendsGeometryChanges);
 
@@ -418,6 +420,16 @@ QRectF RouteRectangle::resizeHandle() const
     return QRectF(br - QPointF(resizeHandleWidth, resizeHandleWidth), br);
 }
 
+void RouteRectangle::setFontSize(int fontSize)
+{
+    m_font_size = fontSize;
+}
+
+int RouteRectangle::getFontSize()
+{
+    return m_font_size;
+}
+
 void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
@@ -439,11 +451,11 @@ void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     font.setBold(true);
     if (m_rcBounding.width() > 300 && m_rcBounding.height() > 200) {
 
-        font.setPixelSize(20);
+        font.setPixelSize(m_font_size+5);
 
     }else{
 
-        font.setPixelSize(15);
+        font.setPixelSize(m_font_size);
 
     }
 
@@ -730,4 +742,17 @@ XAxis * PainterScene::getXAxis()
 YAxis * PainterScene::getYAxis()
 {
     return m_yAxis;
+}
+
+void PainterScene::textSize(const QString &p)
+{
+    QList<QGraphicsItem *> list = this->selectedItems();
+    foreach(QGraphicsItem *item,list){
+        if (item->type() == QGraphicsItem::UserType + 1){
+            RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
+            routeItem->setFontSize(p.toInt());
+            routeItem->update();
+        }
+    }
+
 }

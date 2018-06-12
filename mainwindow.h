@@ -67,6 +67,8 @@ private:
     QMenuBar *menuBar;
     QToolBar * toolBar;
     QProgressBar * progressBar;
+    QComboBox *comboSize;
+    QLabel *labelSize;
 
     QMenu *windowMenu;
     QAction *newAct;

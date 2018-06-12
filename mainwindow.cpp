@@ -70,7 +70,7 @@ void MainWindow::clean()
         //query.exec(QObject::tr("create table BERTH (TERMINAL_CODE vchar, SHIP_LIMIT integer, START_POINT integer, END_POINT integer , NICE integer)"));
         //query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar,X_OFFSET integer DEFAULT 100, Y_OFFSET integer DEFAULT 50 )"));
         query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, "
-                                   "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar)"));
+                                   "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar,FONT_SIZE integer DEFAULT 15)"));
         //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar,ALPHA integer DEFAULT 200 )"));
 
     } else {
@@ -385,6 +385,10 @@ void MainWindow::newFile()
     unlockAct->setEnabled(true);
     undoAct->setEnabled(true);
     gradientAct->setEnabled(true);
+
+    comboSize->setEditable(true);
+    comboSize->setEnabled(true);
+    labelSize->setEnabled(true);
 }
 
 void MainWindow::exportPDF()
@@ -535,7 +539,6 @@ void MainWindow::createActions()
     fileMenu->addAction(exitAct);
 
 
-
     closeAct = new QAction(QString::fromUtf8("关闭"), this);
     closeAct->setStatusTip(tr("Close the active window"));
     connect(closeAct, &QAction::triggered,
@@ -553,6 +556,23 @@ void MainWindow::createActions()
     QAction *aboutAct = helpMenu->addAction(QString::fromUtf8("关于"), this, &MainWindow::about);
     aboutAct->setStatusTip(tr("Show the application's About box"));
 
+    toolBar->addSeparator();
+    labelSize = new QLabel(QString::fromUtf8("  字体尺寸 "),toolBar);
+
+    toolBar->addWidget(labelSize);
+    comboSize = new QComboBox(toolBar);
+    comboSize->setObjectName("comboSize");
+    toolBar->addWidget(comboSize);
+
+    const QList<int> standardSizes = QFontDatabase::standardSizes();
+    foreach (int size, standardSizes)
+        comboSize->addItem(QString::number(size));
+    comboSize->setCurrentIndex(standardSizes.indexOf(QApplication::font().pointSize()));
+
+    comboSize->setEditable(false);
+    comboSize->setEnabled(false);
+    labelSize->setEnabled(false);
+    connect(comboSize, QOverload<const QString &>::of(&QComboBox::activated), this->scene, &PainterScene::textSize);
 }
 
 void MainWindow::importExcel()
@@ -696,6 +716,9 @@ void MainWindow::childWinExit(int type)
          unlockAct->setDisabled(true);
          undoAct->setDisabled(true);
          gradientAct->setDisabled(true);
+         comboSize->setEditable(false);
+         comboSize->setEnabled(false);
+         labelSize->setEnabled(false);
          break;
      default:
          break;
@@ -756,7 +779,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     QList<QPair <QPointF,QPointF>> list;
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE"
                  " from ROUTE_ARRANGEMENT,NAVIGATION where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"'";
     if(!sql_query.exec(select_sql))
@@ -776,16 +799,17 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString endTime = sql_query.value(6).toString();
             QString color = sql_query.value(7).toString();
             QString teu = sql_query.value(8).toString();
-            QString type = sql_query.value(9).toString();
+            //QString type = sql_query.value(9).toString();
             QString routeCode = sql_query.value(10).toString();
             QString timeWindow = sql_query.value(11).toString();
             int alpha = sql_query.value(12).toInt();
+            int fontSize = sql_query.value(13).toInt();
 
-            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
+            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
                     +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
 
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint);
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize);
 
             routeRectangle->setStartPoint(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint));
             routeRectangle->setEndPoint(PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint));
@@ -806,7 +830,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     //未lock的数据自动排一遍
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE"
                  " from ROUTE_ARRANGEMENT,NAVIGATION "
                  "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"' order by SHIP_LENGTH desc ";
@@ -828,16 +852,17 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString endTime = sql_query.value(6).toString();
             QString color = sql_query.value(7).toString();
             QString teu = sql_query.value(8).toString();
-            QString type = sql_query.value(9).toString();
+            //QString type = sql_query.value(9).toString();
             QString routeCode = sql_query.value(10).toString();
             QString timeWindow = sql_query.value(11).toString();
             int alpha = sql_query.value(12).toInt();
+            int fontSize = sql_query.value(13).toInt();
 
-            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" + type + "\r\n" +
+            QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
                     +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
 
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint);
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize);
 
             QSqlQuery query_conf;
 
@@ -973,11 +998,6 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     }
 
-
-
-
-
-
 }
 
 void MainWindow::saveOneBerthData(const Terminal t)
@@ -985,7 +1005,7 @@ void MainWindow::saveOneBerthData(const Terminal t)
     QSqlQuery sql;
 
     QString update_sql = "update ROUTE_ARRANGEMENT set START_BERTH_POINT = :x1 , "
-                         "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y' "
+                         "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y', FONT_SIZE = :x9 "
                          "where ROUTE_CODE = :x7 and TERMINAL_NAME = :x8 ";
     sql.prepare(update_sql);
 
@@ -1004,6 +1024,7 @@ void MainWindow::saveOneBerthData(const Terminal t)
             sql.bindValue(":x6", PainterHelper::convertScreenToEndTime(routeItem->getEndPosScene(),t._basePoint));
             sql.bindValue(":x7", routeItem->getId2());
             sql.bindValue(":x8", t._terminal_name);
+            sql.bindValue(":x9", routeItem->getFontSize());
 
             if(!sql.exec())
             {
