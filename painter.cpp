@@ -319,7 +319,7 @@ void RouteTable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
 }
 
-RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint,int fontSize)
+RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QString id2,QString id3,QPointF basePoint,int fontSize,int align)
     : QGraphicsItem(parent)
     , m_text(text)
     , m_id_1(id1)
@@ -328,6 +328,7 @@ RouteRectangle::RouteRectangle(QGraphicsItem *parent,QString text,QString id1,QS
     , m_rcBounding(0,0,0,0)
     , m_basePoint(basePoint)
     , m_font_size(fontSize)
+    , m_align(align)
 {
     setFlags(QGraphicsItem::ItemIsSelectable|QGraphicsItem::ItemSendsGeometryChanges);
 
@@ -425,6 +426,17 @@ void RouteRectangle::setFontSize(int fontSize)
     m_font_size = fontSize;
 }
 
+void RouteRectangle::setAlign(int align)
+{
+    m_align = align;
+}
+
+int RouteRectangle::getAlign()
+{
+   return m_align;
+}
+
+
 int RouteRectangle::getFontSize()
 {
     return m_font_size;
@@ -473,7 +485,12 @@ void RouteRectangle::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 
     QString strElidedText = fm.elidedText(text, Qt::ElideRight, writeWidth, Qt::TextShowMnemonic);
 
-    painter->drawText(rect, Qt::TextWordWrap | Qt::AlignVCenter |Qt::AlignHCenter, strElidedText);
+    if (m_align == 0)
+        painter->drawText(rect, Qt::TextWordWrap | Qt::AlignVCenter |Qt::AlignHCenter, strElidedText);
+    else if (m_align == 1)
+        painter->drawText(rect, Qt::TextWordWrap | Qt::AlignTop | Qt::AlignHCenter, strElidedText);
+    else
+        painter->drawText(rect, Qt::TextWordWrap | Qt::AlignBottom | Qt::AlignHCenter, strElidedText);
 
     painter->setBrush(Qt::white);
     painter->drawRect(resizeHandle().adjusted(0, 0, 1, 1));

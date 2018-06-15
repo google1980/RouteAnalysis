@@ -15,5 +15,8 @@
         <file>images/undo.png</file>
         <file>images/clean.png</file>
         <file>images/painter.png</file>
+        <file>images/textcenter.png</file>
+        <file>images/textleft.png</file>
+        <file>images/textright.png</file>
     </qresource>
 </RCC>

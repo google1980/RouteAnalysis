@@ -69,8 +69,8 @@ void MainWindow::clean()
 
         //query.exec(QObject::tr("create table BERTH (TERMINAL_CODE vchar, SHIP_LIMIT integer, START_POINT integer, END_POINT integer , NICE integer)"));
         //query.exec(QObject::tr("create table TERMINAL (TERMINAL_NAME vchar,TERMINAL_CODE vchar, TERMINAL_LEN integer DEFAULT 1500,DAY integer DEFAULT 8, ENABLED vchar,X_OFFSET integer DEFAULT 100, Y_OFFSET integer DEFAULT 50 )"));
-        query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, "
-                                   "TEU vchar,TYPE vchar, START_WEEK_DAY vchar,START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar,FONT_SIZE integer DEFAULT 15)"));
+        query.exec(QObject::tr("create table ROUTE_ARRANGEMENT (TERMINAL_NAME vchar, ROUTE_NAME vchar,ROUTE_CODE vchar,NAVIGATION_NAME vchar,SHIP_LENGTH integer,OPERATOR vchar,PORT vchar,AGENT vchar, TEU vchar,TYPE vchar, START_WEEK_DAY vchar,"
+                                   "START_TIME vchar,END_WEEK_DAY vchar,END_TIME vchar,START_BERTH_POINT integer,IS_LOCKED vchar DEFAULT 'N',TIME_WINDOW varchar,FONT_SIZE integer DEFAULT 15,ALIGN integer DEFAULT 0)"));
         //query.exec(QObject::tr("create table NAVIGATION (NAVIGATION_NAME vchar,COLOUR vchar,ALPHA integer DEFAULT 200 )"));
 
     } else {
@@ -84,7 +84,7 @@ void MainWindow::about()
    QMessageBox message(QMessageBox::NoIcon,QString::fromUtf8("关于 RouteAnalysis"),
                        QString::fromUtf8("RouteAnalysis 是协助用户航线安排、分析的小软件,请务必按要求的EXCEL格式提供原始数据.\r\n\r\n"
                                                                                               "开发者: Road\r\n"
-                                                                                              "版本号: 1.6.0"),QMessageBox::Close,this,Qt::Dialog);
+                                                                                              "版本号: 1.8.0"),QMessageBox::Close,this,Qt::Dialog);
    message.setIconPixmap(QPixmap(":/images/web.ico"));
    message.exec();
 
@@ -227,6 +227,15 @@ void MainWindow::lock()
     }
 }
 
+void MainWindow::up()
+{
+    QGraphicsItem *itemSelected = scene->selectedItems().first();
+    QList<QGraphicsItem *> collideItems = scene->collidingItems(itemSelected);
+    for (int i = collideItems.size()-1; i >= 0; --i)
+        collideItems.at(i)->stackBefore(itemSelected);
+    scene->update();
+}
+
 void MainWindow::unlock()
 {
     if (scene->items().count() != 0){
@@ -311,6 +320,58 @@ void MainWindow::undo()
     }
 }
 
+void MainWindow::texttop()
+{
+    QList<QGraphicsItem *> items = scene->selectedItems();
+
+    foreach (QGraphicsItem *item, items) {
+        if ((item->type() == QGraphicsItem::UserType + 1)) {  // 矩形
+
+            RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
+            routeItem->setAlign(1);
+            routeItem->update();
+            break;
+
+        }
+
+    }
+
+}
+
+void MainWindow::textbottom()
+{
+    QList<QGraphicsItem *> items = scene->selectedItems();
+
+    foreach (QGraphicsItem *item, items) {
+        if ((item->type() == QGraphicsItem::UserType + 1)) {  // 矩形
+
+            RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
+            routeItem->setAlign(2);
+            routeItem->update();
+            break;
+
+        }
+
+    }
+}
+
+void MainWindow::textcenter()
+{
+    QList<QGraphicsItem *> items = scene->selectedItems();
+
+    foreach (QGraphicsItem *item, items) {
+        if ((item->type() == QGraphicsItem::UserType + 1)) {  // 矩形
+
+            RouteRectangle * routeItem = static_cast<RouteRectangle *> (item);
+            routeItem->setAlign(0);
+            routeItem->update();
+            break;
+
+        }
+
+    }
+}
+
 
 void MainWindow::newFile()
 {
@@ -385,6 +446,10 @@ void MainWindow::newFile()
     unlockAct->setEnabled(true);
     undoAct->setEnabled(true);
     gradientAct->setEnabled(true);
+    upAct->setEnabled(true);
+    textcenterAct->setEnabled(true);
+    texttopAct->setEnabled(true);
+    textbottomAct->setEnabled(true);
 
     comboSize->setEditable(true);
     comboSize->setEnabled(true);
@@ -466,6 +531,8 @@ void MainWindow::createActions()
     toolBar->addAction(unlockAct);
     unlockAct->setDisabled(true);
 
+
+
     const QIcon undoIcon = QIcon::fromTheme("document-unlock", QIcon(":/images/undo.png"));
     undoAct = new QAction(undoIcon, QString::fromUtf8("全部擦除"), this);
     undoAct->setStatusTip(tr("Undo"));
@@ -530,6 +597,13 @@ void MainWindow::createActions()
     connect(cleanAct, &QAction::triggered, this, &MainWindow::clean);
     fileMenu->addAction(cleanAct);
 
+    const QIcon upIcon = QIcon::fromTheme("document-up", QIcon(":/images/copy.png"));
+    upAct = new QAction(upIcon, QString::fromUtf8("提升"), this);
+    upAct->setStatusTip(tr("up"));
+    connect(upAct, &QAction::triggered, this, &MainWindow::up);
+    toolBar->addAction(upAct);
+    upAct->setDisabled(true);
+
     fileMenu->addSeparator();
 
     const QIcon exitIcon = QIcon::fromTheme("application-exit");
@@ -557,6 +631,28 @@ void MainWindow::createActions()
     aboutAct->setStatusTip(tr("Show the application's About box"));
 
     toolBar->addSeparator();
+
+    const QIcon textcenterIcon = QIcon::fromTheme("document-textCenter", QIcon(":/images/textcenter.png"));
+    textcenterAct = new QAction(textcenterIcon, QString::fromUtf8("居中"), this);
+    textcenterAct->setStatusTip(tr("center"));
+    connect(textcenterAct, &QAction::triggered, this, &MainWindow::textcenter);
+    toolBar->addAction(textcenterAct);
+    textcenterAct->setDisabled(true);
+
+    const QIcon texttopIcon = QIcon::fromTheme("document-textTop", QIcon(":/images/textleft.png"));
+    texttopAct = new QAction(texttopIcon, QString::fromUtf8("顶端"), this);
+    texttopAct->setStatusTip(tr("top"));
+    connect(texttopAct, &QAction::triggered, this, &MainWindow::texttop);
+    toolBar->addAction(texttopAct);
+    texttopAct->setDisabled(true);
+
+    const QIcon textbottomIcon = QIcon::fromTheme("document-bottom", QIcon(":/images/textright.png"));
+    textbottomAct = new QAction(textbottomIcon, QString::fromUtf8("底端"), this);
+    textbottomAct->setStatusTip(tr("bottom"));
+    connect(textbottomAct, &QAction::triggered, this, &MainWindow::textbottom);
+    toolBar->addAction(textbottomAct);
+    textbottomAct->setDisabled(true);
+
     labelSize = new QLabel(QString::fromUtf8("  字体尺寸 "),toolBar);
 
     toolBar->addWidget(labelSize);
@@ -719,6 +815,10 @@ void MainWindow::childWinExit(int type)
          comboSize->setEditable(false);
          comboSize->setEnabled(false);
          labelSize->setEnabled(false);
+         upAct->setDisabled(true);
+         textbottomAct->setDisabled(true);
+         texttopAct->setDisabled(true);
+         textcenterAct->setDisabled(true);
          break;
      default:
          break;
@@ -779,7 +879,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     QList<QPair <QPointF,QPointF>> list;
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE,ALIGN"
                  " from ROUTE_ARRANGEMENT,NAVIGATION where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'Y' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"'";
     if(!sql_query.exec(select_sql))
@@ -804,12 +904,13 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString timeWindow = sql_query.value(11).toString();
             int alpha = sql_query.value(12).toInt();
             int fontSize = sql_query.value(13).toInt();
+            int align = sql_query.value(14).toInt();
 
             QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
                     +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
 
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize);
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize,align);
 
             routeRectangle->setStartPoint(PainterHelper::convertToScreenTopLeft(startBerthPoint,startTime,startWeekDay,t._basePoint));
             routeRectangle->setEndPoint(PainterHelper::convertToScreenBottomRight(startBerthPoint,shipLength,endTime,endWeekDay,t._basePoint));
@@ -830,7 +931,7 @@ void MainWindow::drawOneBerthMap(const Terminal t)
 
     //未lock的数据自动排一遍
 
-    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE"
+    select_sql = "select ROUTE_NAME,START_BERTH_POINT,SHIP_LENGTH,START_WEEK_DAY,START_TIME,END_WEEK_DAY,END_TIME,COLOUR,TEU,TYPE,ROUTE_CODE,TIME_WINDOW,ALPHA,FONT_SIZE,ALIGN"
                  " from ROUTE_ARRANGEMENT,NAVIGATION "
                  "where ROUTE_ARRANGEMENT.NAVIGATION_NAME = NAVIGATION.NAVIGATION_NAME and IS_LOCKED = 'N' "
                  "and TERMINAL_NAME = '" + t._terminal_name +"' order by SHIP_LENGTH desc ";
@@ -857,12 +958,13 @@ void MainWindow::drawOneBerthMap(const Terminal t)
             QString timeWindow = sql_query.value(11).toString();
             int alpha = sql_query.value(12).toInt();
             int fontSize = sql_query.value(13).toInt();
+            int align = sql_query.value(14).toInt();
 
             QString text = routeName+"\r\n"+ QString::fromUtf8("月均箱量 ") + teu+ "\r\n" +
                    QString("%1").arg(startWeekDay,2,10,QLatin1Char('0'))  + "\\" + startTime + " --- "
                     +  QString("%1").arg(endWeekDay,2,10,QLatin1Char('0')) + "\\" + endTime;
 
-            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize);
+            RouteRectangle * routeRectangle = new RouteRectangle(0,text,t._terminal_name,routeCode,timeWindow,t._basePoint,fontSize,align);
 
             QSqlQuery query_conf;
 
@@ -1005,7 +1107,7 @@ void MainWindow::saveOneBerthData(const Terminal t)
     QSqlQuery sql;
 
     QString update_sql = "update ROUTE_ARRANGEMENT set START_BERTH_POINT = :x1 , "
-                         "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y', FONT_SIZE = :x9 "
+                         "SHIP_LENGTH = :x2 , START_WEEK_DAY = :x3, START_TIME = :x4, END_WEEK_DAY = :x5, END_TIME = :x6, IS_LOCKED = 'Y', FONT_SIZE = :x9, ALIGN = :x10 "
                          "where ROUTE_CODE = :x7 and TERMINAL_NAME = :x8 ";
     sql.prepare(update_sql);
 
@@ -1025,6 +1127,7 @@ void MainWindow::saveOneBerthData(const Terminal t)
             sql.bindValue(":x7", routeItem->getId2());
             sql.bindValue(":x8", t._terminal_name);
             sql.bindValue(":x9", routeItem->getFontSize());
+            sql.bindValue(":x10", routeItem->getAlign());
 
             if(!sql.exec())
             {

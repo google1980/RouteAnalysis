@@ -47,12 +47,16 @@ private slots:
     void importExcel();
     void childWinExit(int type);
     void lock();
+    void up();
     void unlock();
     void undo();
     void clean();
     void about();
     void updateWindowMenu();
     void gradient();
+    void texttop();
+    void textcenter();
+    void textbottom();
 
     void drawOneBerthMap(const Terminal t);
     void saveOneBerthData(const Terminal t);
@@ -86,6 +90,10 @@ private:
     QAction *closeAct;
     QAction *closeAllAct;
     QAction *gradientAct;
+    QAction *upAct;
+    QAction *textcenterAct;
+    QAction *texttopAct;
+    QAction *textbottomAct;
 
     PainterScene *scene;
 
