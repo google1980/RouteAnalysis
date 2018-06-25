@@ -32,6 +32,7 @@ SOURCES += \
     formnavigationquery.cpp \
     delegate.cpp \
     formberthconfig.cpp \
+    mysqltablemodel.cpp \
     mysqltablemodel.cpp
 
 HEADERS += \
@@ -43,6 +44,7 @@ HEADERS += \
     formnavigationquery.h \
     delegate.h \
     formberthconfig.h \
+    mysqltablemodel.h \
     mysqltablemodel.h
 
 FORMS += \

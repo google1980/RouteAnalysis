@@ -7,7 +7,7 @@ FormNavigationQuery::FormNavigationQuery(QWidget *parent) :
     ui(new Ui::FormNavigationQuery)
 {
     ui->setupUi(this);
-    model = new MySqlTableModel(this);
+    model = new MySqlTableModel(this,QSqlDatabase(),1);
     model->setTable("NAVIGATION");
     model->setEditStrategy(MySqlTableModel::OnManualSubmit);
 

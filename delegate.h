@@ -3,6 +3,7 @@
 
 #include <QItemDelegate>
 #include <QComboBox>
+#include <QDebug>
 
 class MyComboDelegate : public QItemDelegate
 {

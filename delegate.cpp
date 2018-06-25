@@ -54,6 +54,27 @@ QWidget* MyComboDelegate::createEditor(
 
         }
         break;
+    case 3:
+        if(index.column() == m_column)   //colRycchannel是列的枚举类型，也可以用立即数，那样比较low
+        {
+
+    //此处如果不加parent，edit不会内嵌在表格中 会跑出来
+            channelBox->setFixedHeight(option.rect.height());
+            names.append("Center");
+            names.append("Top");
+            names.append("Bottom");
+            for (int i = 0; i < names.size(); ++i) {
+                channelBox->insertItem(i, names[i], i);
+                channelBox->setItemData(i,i);
+
+            }
+            return channelBox;
+        }else{
+
+            return QItemDelegate::createEditor(parent, option, index);
+
+        }
+        break;
     default:
         break;
     }
@@ -68,6 +89,8 @@ void MyComboDelegate::setEditorData(QWidget * editor, const QModelIndex & index)
     switch (m_type){
 
     case 0:
+    case 1:
+    case 2:
         if(index.column() == m_column)
         {
             QComboBox *comboBox = static_cast<QComboBox*>(editor);
@@ -82,14 +105,14 @@ void MyComboDelegate::setEditorData(QWidget * editor, const QModelIndex & index)
             QItemDelegate::setEditorData(editor, index);
         }
         break;
-    case 1:
-    case 2:
+
+    case 3:
         if(index.column() == m_column)
         {
             QComboBox *comboBox = static_cast<QComboBox*>(editor);
             if(comboBox)
             {
-                QString str = index.model()->data(index, Qt::EditRole).toString();
+                QString str = index.model()->data(index, Qt::DisplayRole).toString();
                 comboBox->setCurrentIndex(comboBox->findText(str));
             }
         }
@@ -112,6 +135,8 @@ void MyComboDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
     int nColumn = index.column();
     switch (m_type){
     case 0:
+    case 1:
+    case 2:
         if((nColumn==m_column))
         {
             QComboBox *comboBox = static_cast<QComboBox*>(editor);
@@ -123,13 +148,16 @@ void MyComboDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
             QItemDelegate::setModelData(editor, model, index);
         }
         break;
-    case 1:
-    case 2:
+
+    case 3:
         if((nColumn==m_column))
         {
             QComboBox *comboBox = static_cast<QComboBox*>(editor);
             if(comboBox!=0)
-                model->setData(index, comboBox->currentText(), Qt::EditRole);
+
+                model->setData(index, comboBox->currentData(), Qt::EditRole);
+
+
         }
         else
         {

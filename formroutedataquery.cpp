@@ -11,7 +11,7 @@ FormRouteDataQuery::FormRouteDataQuery(QWidget *parent) :
     ui(new Ui::FormRouteDataQuery)
 {
     ui->setupUi(this);
-    model = new QSqlTableModel(this);
+    model = new MySqlTableModel(this);
     model->setTable("ROUTE_ARRANGEMENT");
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
@@ -43,6 +43,7 @@ FormRouteDataQuery::FormRouteDataQuery(QWidget *parent) :
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(OnDelete()));
 
     ui->tableView->setItemDelegate(new MyComboDelegate(this,1,15));
+    ui->tableView->setItemDelegate(new MyComboDelegate(this,3,18));
 
 
     setAttribute(Qt::WA_DeleteOnClose);

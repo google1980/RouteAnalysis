@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <QSqlTableModel>
 #include <QItemDelegate>
+#include "mysqltablemodel.h"
 
 namespace Ui {
 class FormRouteDataQuery;
@@ -27,7 +28,7 @@ private slots:
 
 private:
     Ui::FormRouteDataQuery *ui;
-    QSqlTableModel *model;
+    MySqlTableModel *model;
 };
 
 #endif // FORMROUTEDATAQUERY_H

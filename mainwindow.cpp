@@ -171,10 +171,15 @@ void MainWindow::gradient()
     if (scene->items().count() != 0){
 
         if (PainterHelper::isGradient == 0)
+        {
             PainterHelper::isGradient = 1;
+            scene->setBackgroundBrush(QColor("lightblue"));
+        }
         else
+        {
             PainterHelper::isGradient = 0;
-
+            scene->setBackgroundBrush(Qt::white);
+        }
         scene->update();
 
     }else{
